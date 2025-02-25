@@ -1,0 +1,715 @@
+/* Apply Poppins Font to Everything */
+body {
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #e0f7fa; /* Light blue ocean theme */
+  display: flex;
+  flex-direction: row; /* Arrange components horizontally */
+  align-items: flex-start;
+  text-align: center;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 131px;
+  width: auto;
+}
+
+img {
+  overflow-clip-margin: content-box;
+  overflow: clip;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: white;
+  margin: 15px auto;
+  width: fit-content;
+  border-radius: 10px;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to right, #0077be, #0099cc, #00bfff);
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+/* Smooth Glow Effect on Hover */
+.title:hover {
+  animation: glowing 1.5s infinite alternate;
+}
+
+@keyframes glowing {
+  0% {
+    box-shadow: 0 0 10px rgba(0, 183, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 183, 255, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(0, 183, 255, 0.5);
+  }
+}
+
+/* Main Layout: Left (Components) & Right (NDL Placeholder) */
+.container {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.left-section {
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: 20px;
+}
+
+.right-section {
+  width: 30%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Decompression Model Selector */
+.ndl-placeholder select {
+  width: 250px;
+  height: 50px;
+  font-size: 16px;
+  padding: 10px;
+  border: 2px solid #007bff;
+  background-color: white;
+  text-align: center;
+  appearance: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ndl-placeholder select:hover {
+  background-color: #f0f8ff;
+}
+
+.ndl-placeholder label {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Terminal-Style Dive Log Container */
+.log-container {
+  width: 100%;
+  background: #1e1e1e;
+  color: #33ff33;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  padding: 15px;
+  border-top: 2px solid #00ff00;
+  overflow-y: auto;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: fixed;
+  bottom: -150px;
+  left: 0;
+  right: 0;
+  transition: bottom 0.5s ease-in-out;
+  box-shadow: 0 -4px 10px rgba(0, 255, 0, 0.2);
+  border-radius: 5px 5px 0 0;
+}
+
+.log-container:hover {
+  bottom: 0;
+}
+
+.log-container h2 {
+  font-size: 14px;
+  color: #00ff00;
+  margin: 5px 0;
+  padding: 5px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 1px solid #00ff00;
+}
+
+.log-entry {
+  width: 100%;
+  font-size: 13px;
+  text-align: left;
+  padding: 2px 5px;
+  white-space: pre-wrap;
+}
+
+.log-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #111;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #00ff00;
+  border-radius: 4px;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.log-entry::after {
+  content: "_";
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+/* Ocean & Diver */
+.ocean-container {
+  width: 100%;
+  position: relative;
+}
+
+.ocean {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: url("/static/images/sea-bottom.webp") no-repeat center bottom;
+  background-size: cover;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+#rgbm-options {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #007bff;
+  width: fit-content;
+}
+
+#rgbm-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+#rgbm-options label {
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #333;
+}
+
+#rgbm-options:hover {
+  background-color: #e3f2fd;
+  border-color: #0056b3;
+}
+
+#rgbm-checkbox:focus + label {
+  outline: 2px dashed #007bff;
+  outline-offset: 2px;
+}
+
+.diver {
+  position: absolute;
+  width: 160px;
+  height: auto;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: top 1s ease-in-out;
+}
+
+/* Wrapper for Info Panel & Buttons */
+.info-button-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  max-width: 900px;
+  gap: 30px;
+  padding: 5px 0;
+}
+
+.info-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 65%;
+  max-width: 650px;
+  margin-top: 0;
+}
+
+.info {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: left;
+  width: 45%;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 40%;
+  max-width: 220px;
+  margin-top: 10px;
+}
+
+/* Button Styling */
+button {
+  padding: 14px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: bold;
+  color: white;
+  width: 100%;
+}
+
+#dive-btn {
+  background: #28a745;
+}
+
+#ascend-btn {
+  background: #007bff;
+}
+
+#reset-btn {
+  background: #dc3545;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+.info-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 5px;
+  color: #007bff;
+}
+
+/* Modal for Oxygen Toxicity Table */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 600px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Table Styling */
+#toxicity-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#toxicity-table th,
+#toxicity-table td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+}
+
+#toxicity-table th {
+  background-color: lightgray;
+}
+
+/* NDL Placeholder Styling */
+.ndl-placeholder {
+  width: 100%;
+  border: 2px dashed #007bff;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  color: #007bff;
+  font-weight: bold;
+  padding: 15px;
+  text-align: center;
+}
+
+#deco-model {
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #007bff;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+}
+
+/* Button Container (Right Side) */
+#right-container {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  gap: 15px;
+}
+
+/* Decompression Table Container */
+#ndl-container {
+  width: 800px;
+  margin: 15px 10px;
+  padding: 15px 5px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: "Arial", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+#ndl-container h3 {
+  font-size: 20px;
+  color: #007bff;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#ndl-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#ndl-container table thead {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+#ndl-container table th {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+#ndl-container table td {
+  padding: 8px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+#ndl-container table tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+#ndl-container table tbody tr:hover {
+  background-color: #cce5ff;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  #ndl-container table {
+    font-size: 14px;
+  }
+}
+
+/* "Calculate NDL" Button */
+#calculate-ndl-btn {
+  width: 100%;
+  height: 50px;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #ff9800;
+  color: white;
+  transition: 0.3s ease-in-out;
+}
+
+#calculate-ndl-btn:hover {
+  background: #e68900;
+  box-shadow: 0px 4px 10px rgba(255, 152, 0, 0.5);
+}
+
+#calculate-ndl-btn:active {
+  transform: scale(0.98);
+}
+
+/* Tab Navigation */
+.tab-container {
+  display: flex;
+  justify-content: space-evenly;
+  background: #007bff;
+  border-radius: 10px;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  background: #0056b3;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: 0.3s;
+}
+
+.tab-btn.active {
+  background: #ff9800;
+}
+
+.tab-btn:hover {
+  background: #003f7f;
+}
+
+.tab-content {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: none;
+}
+
+#ndl-page {
+  display: block;
+}
+
+/* Gas Mixture Panel */
+.yellow-container {
+  position: fixed;
+  top: 15px;
+  right: 0;
+  width: 14vw;
+  height: 90vh;
+  background-color: #f8f8f8;
+  box-shadow: -5px 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 10px 0 0 10px;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 1;
+}
+
+.gas-mixture-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.gas-mixture-text {
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.gas-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  justify-content: center;
+}
+
+.gas-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 4px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+  width: 110px;
+  height: 110px;
+  text-align: center;
+}
+
+.gas-card:hover {
+  transform: scale(1.05);
+}
+
+.gas-card img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 5px;
+  object-fit: contain;
+}
+
+.gas-card span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5a5a5a;
+}
+
+.gas-inputs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  gap: 12px;
+}
+
+.gas-box {
+  width: 80%;
+  text-align: center;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.gas-box label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.gas-box input {
+  width: 100%;
+  padding: 0;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Highlight Selected Gas Card */
+.gas-card.selected {
+  border: 2px solid blue;
+  box-shadow: 0 0 10px rgba(0, 0, 255, 0.5);
+}
+
+/* Calculate Decompression Stops Button */
+#calculate-deco-btn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #007BFF;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#calculate-deco-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Deco Output Container */
+#deco-output {
+  margin-top: 15px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f4f4f4;
+  color: #333;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* Container for Gas Values */
+.gas-values {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 20px;
+  background-color: #ffffff;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 15px 0;
+}
+
+/* Individual Gas Items */
+.gas-values .gas-item {
+  flex: 1;
+  text-align: center;
+  min-width: 60px;
+}
+
+/* Value Styling */
+.gas-values .gas-item span.value {
+  display: block;
+  font-size: 28px;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+/* Label Styling */
+.gas-values .gas-item span.label {
+  display: block;
+  font-size: 16px;
+  color: #555;
+}

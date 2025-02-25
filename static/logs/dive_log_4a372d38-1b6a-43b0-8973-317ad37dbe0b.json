@@ -1,0 +1,562 @@
+[
+    {
+        "timestamp": "2025-02-18 21:09:37",
+        "depth": 50,
+        "pressure": 6.0,
+        "oxygen_toxicity": 1.26,
+        "ndl": 43.33,
+        "rgbm_factor": 0.61664,
+        "total_time": 421.97,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:38",
+        "depth": 60,
+        "pressure": 7.0,
+        "oxygen_toxicity": 1.47,
+        "ndl": 40.0,
+        "rgbm_factor": 0.55796,
+        "total_time": 423.53,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:40",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 56.67,
+        "rgbm_factor": 0.91992,
+        "total_time": 0,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:41",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.33,
+        "rgbm_factor": 0.83238,
+        "total_time": 0,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:41",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 0.75317,
+        "total_time": 0,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:56",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 15.03,
+        "rgbm_factor": 0.83,
+        "total_time": 92.38,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:56",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 33.99,
+        "rgbm_factor": 0.92,
+        "total_time": 92.38,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:56",
+        "depth": 0,
+        "pressure": 1.0,
+        "oxygen_toxicity": 0.21,
+        "ndl": 999,
+        "rgbm_factor": 1.0,
+        "total_time": 92.38,
+        "time_at_depth": 0
+    },
+    {
+        "timestamp": "2025-02-18 21:09:58",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.33,
+        "rgbm_factor": 0.83238,
+        "total_time": 95.85,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:09:59",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 1.88146,
+        "total_time": 95.85,
+        "time_at_depth": 92.38
+    },
+    {
+        "timestamp": "2025-02-18 21:10:01",
+        "depth": 40,
+        "pressure": 5.0,
+        "oxygen_toxicity": 1.05,
+        "ndl": 46.67,
+        "rgbm_factor": 0.68149,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:01",
+        "depth": 50,
+        "pressure": 6.0,
+        "oxygen_toxicity": 1.26,
+        "ndl": 43.33,
+        "rgbm_factor": 0.61664,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:02",
+        "depth": 60,
+        "pressure": 7.0,
+        "oxygen_toxicity": 1.47,
+        "ndl": 40.0,
+        "rgbm_factor": 0.55796,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:02",
+        "depth": 70,
+        "pressure": 8.0,
+        "oxygen_toxicity": 1.68,
+        "ndl": 36.67,
+        "rgbm_factor": 0.50486,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:02",
+        "depth": 80,
+        "pressure": 9.0,
+        "oxygen_toxicity": 1.89,
+        "ndl": 33.33,
+        "rgbm_factor": 0.45682,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:03",
+        "depth": 90,
+        "pressure": 10.0,
+        "oxygen_toxicity": 2.1,
+        "ndl": 30.0,
+        "rgbm_factor": 0.41335,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:03",
+        "depth": 100,
+        "pressure": 11.0,
+        "oxygen_toxicity": 2.31,
+        "ndl": 26.67,
+        "rgbm_factor": 0.37401,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:03",
+        "depth": 110,
+        "pressure": 12.0,
+        "oxygen_toxicity": 2.52,
+        "ndl": 23.33,
+        "rgbm_factor": 0.33842,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:04",
+        "depth": 100,
+        "pressure": 11.0,
+        "oxygen_toxicity": 2.31,
+        "ndl": 3.02,
+        "rgbm_factor": 0.37,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:04",
+        "depth": 90,
+        "pressure": 10.0,
+        "oxygen_toxicity": 2.1,
+        "ndl": 3.35,
+        "rgbm_factor": 0.41,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:05",
+        "depth": 80,
+        "pressure": 9.0,
+        "oxygen_toxicity": 1.89,
+        "ndl": 3.77,
+        "rgbm_factor": 0.46,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:05",
+        "depth": 70,
+        "pressure": 8.0,
+        "oxygen_toxicity": 1.68,
+        "ndl": 4.3,
+        "rgbm_factor": 0.5,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:06",
+        "depth": 60,
+        "pressure": 7.0,
+        "oxygen_toxicity": 1.47,
+        "ndl": 5.0,
+        "rgbm_factor": 0.56,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:06",
+        "depth": 50,
+        "pressure": 6.0,
+        "oxygen_toxicity": 1.26,
+        "ndl": 5.99,
+        "rgbm_factor": 0.62,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:06",
+        "depth": 40,
+        "pressure": 5.0,
+        "oxygen_toxicity": 1.05,
+        "ndl": 7.47,
+        "rgbm_factor": 0.68,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:06",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 9.95,
+        "rgbm_factor": 1.9,
+        "total_time": 97.27,
+        "time_at_depth": 93.8
+    },
+    {
+        "timestamp": "2025-02-18 21:10:07",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 15.03,
+        "rgbm_factor": 0.83,
+        "total_time": 97.27,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:07",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 33.99,
+        "rgbm_factor": 0.96,
+        "total_time": 97.27,
+        "time_at_depth": 3.47
+    },
+    {
+        "timestamp": "2025-02-18 21:10:07",
+        "depth": 0,
+        "pressure": 1.0,
+        "oxygen_toxicity": 0.21,
+        "ndl": 999,
+        "rgbm_factor": 1.0,
+        "total_time": 97.27,
+        "time_at_depth": 0
+    },
+    {
+        "timestamp": "2025-02-18 21:10:09",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.33,
+        "rgbm_factor": 0.83238,
+        "total_time": 100.71,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:12",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 1.89901,
+        "total_time": 104.32,
+        "time_at_depth": 93.8
+    },
+    {
+        "timestamp": "2025-02-18 21:10:12",
+        "depth": 40,
+        "pressure": 5.0,
+        "oxygen_toxicity": 1.05,
+        "ndl": 46.67,
+        "rgbm_factor": 0.68149,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:12",
+        "depth": 50,
+        "pressure": 6.0,
+        "oxygen_toxicity": 1.26,
+        "ndl": 43.33,
+        "rgbm_factor": 0.61664,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:13",
+        "depth": 60,
+        "pressure": 7.0,
+        "oxygen_toxicity": 1.47,
+        "ndl": 40.0,
+        "rgbm_factor": 0.55796,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:13",
+        "depth": 70,
+        "pressure": 8.0,
+        "oxygen_toxicity": 1.68,
+        "ndl": 36.67,
+        "rgbm_factor": 0.50486,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:13",
+        "depth": 80,
+        "pressure": 9.0,
+        "oxygen_toxicity": 1.89,
+        "ndl": 33.33,
+        "rgbm_factor": 0.45682,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:13",
+        "depth": 90,
+        "pressure": 10.0,
+        "oxygen_toxicity": 2.1,
+        "ndl": 30.0,
+        "rgbm_factor": 0.41335,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:14",
+        "depth": 100,
+        "pressure": 11.0,
+        "oxygen_toxicity": 2.31,
+        "ndl": 26.67,
+        "rgbm_factor": 0.37401,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:14",
+        "depth": 110,
+        "pressure": 12.0,
+        "oxygen_toxicity": 2.52,
+        "ndl": 23.33,
+        "rgbm_factor": 0.33842,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:14",
+        "depth": 120,
+        "pressure": 13.0,
+        "oxygen_toxicity": 2.73,
+        "ndl": 20.0,
+        "rgbm_factor": 0.30621,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:14",
+        "depth": 130,
+        "pressure": 14.0,
+        "oxygen_toxicity": 2.94,
+        "ndl": 16.67,
+        "rgbm_factor": 0.27707,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:15",
+        "depth": 140,
+        "pressure": 15.0,
+        "oxygen_toxicity": 3.15,
+        "ndl": 13.33,
+        "rgbm_factor": 0.25071,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:10:15",
+        "depth": 150,
+        "pressure": 16.0,
+        "oxygen_toxicity": 3.36,
+        "ndl": 10.0,
+        "rgbm_factor": 0.22685,
+        "total_time": 104.32,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:53",
+        "depth": 140,
+        "pressure": 15.0,
+        "oxygen_toxicity": 3.15,
+        "ndl": 2.16,
+        "rgbm_factor": 0.25,
+        "total_time": 558846.03,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:55",
+        "depth": 150,
+        "pressure": 16.0,
+        "oxygen_toxicity": 3.36,
+        "ndl": 10.0,
+        "rgbm_factor": 2078.09194,
+        "total_time": 558847.69,
+        "time_at_depth": 558741.72
+    },
+    {
+        "timestamp": "2025-02-18 21:27:58",
+        "depth": 140,
+        "pressure": 15.0,
+        "oxygen_toxicity": 3.15,
+        "ndl": 2.16,
+        "rgbm_factor": 0.25,
+        "total_time": 558849.1,
+        "time_at_depth": 1.66
+    },
+    {
+        "timestamp": "2025-02-18 21:27:58",
+        "depth": 130,
+        "pressure": 14.0,
+        "oxygen_toxicity": 2.94,
+        "ndl": 2.33,
+        "rgbm_factor": 0.28,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:58",
+        "depth": 120,
+        "pressure": 13.0,
+        "oxygen_toxicity": 2.73,
+        "ndl": 2.52,
+        "rgbm_factor": 0.31,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:58",
+        "depth": 110,
+        "pressure": 12.0,
+        "oxygen_toxicity": 2.52,
+        "ndl": 2.75,
+        "rgbm_factor": 0.34,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:58",
+        "depth": 100,
+        "pressure": 11.0,
+        "oxygen_toxicity": 2.31,
+        "ndl": 3.02,
+        "rgbm_factor": 0.37,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:59",
+        "depth": 90,
+        "pressure": 10.0,
+        "oxygen_toxicity": 2.1,
+        "ndl": 3.35,
+        "rgbm_factor": 0.41,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:59",
+        "depth": 80,
+        "pressure": 9.0,
+        "oxygen_toxicity": 1.89,
+        "ndl": 3.77,
+        "rgbm_factor": 0.46,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:27:59",
+        "depth": 70,
+        "pressure": 8.0,
+        "oxygen_toxicity": 1.68,
+        "ndl": 4.3,
+        "rgbm_factor": 0.5,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:28:00",
+        "depth": 60,
+        "pressure": 7.0,
+        "oxygen_toxicity": 1.47,
+        "ndl": 5.0,
+        "rgbm_factor": 0.56,
+        "total_time": 558849.1,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:28:02",
+        "depth": 50,
+        "pressure": 6.0,
+        "oxygen_toxicity": 1.26,
+        "ndl": 5.99,
+        "rgbm_factor": 0.62,
+        "total_time": 558850.83,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 21:28:03",
+        "depth": 40,
+        "pressure": 5.0,
+        "oxygen_toxicity": 1.05,
+        "ndl": 7.47,
+        "rgbm_factor": 0.68,
+        "total_time": 558851.84,
+        "time_at_depth": 1
+    }
+]

@@ -1,0 +1,32 @@
+[
+    {
+        "timestamp": "2025-02-18 22:07:07",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 56.67,
+        "rgbm_factor": 0.91992,
+        "total_time": 4.54,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 22:07:08",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.33,
+        "rgbm_factor": 0.83238,
+        "total_time": 5.63,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 22:07:09",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 0.75317,
+        "total_time": 6.74,
+        "time_at_depth": 1
+    }
+]

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diver Pressure Simulation</title>
+  <link rel="icon" type="image/png" href="/static/images/da.ico">
+
+  <!-- External Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Left Section -->
+    <div class="left-section">
+      <div class="ocean-container">
+        <h1 class="title">
+          <span class="logo-container">
+            <img src="/static/images/da-transp.png" alt="Logo" class="logo">
+          </span>
+          DivAlgo - A Diving Decompression Algorithmic Simulator
+        </h1>
+        <div class="ocean">
+          <img src="/static/images/diver.png" alt="Diver with Tank and Suit" class="diver" id="diver">
+        </div>
+      </div>
+
+      <!-- Info & Button Wrapper -->
+      <div class="info-button-wrapper">
+        <!-- Info Container -->
+        <div class="info-container">
+          <div class="info"><p>Depth:</p> <span id="depth">0</span> m</div>
+          <div class="info"><p>Pressure:</p> <span id="pressure">1.00</span> atm</div>
+          <div class="info"><p>NDL:</p> <span id="ndl">60.00</span> min</div>
+          <!-- Removed duplicate NDL element. If you intended to show a separate value, rename the label and/or id -->
+          <div class="info">
+            <p>Oxygen Toxicity:</p>
+            <span id="toxicity">0.21</span> PO₂
+            <button id="info-btn" class="info-button" disabled hidden>ℹ️</button>
+          </div>
+          <div class="info"><p>RGBM Factor:</p> <span id="rgbm">1.00</span></div>
+          <div class="info"><p>Time Elapsed:</p> <span id="time">33</span> sec</div>
+          <div class="info"><p>Time at Depth:</p> <span id="depth-time">33</span> sec</div>
+        </div>
+
+        <!-- Button & Decompression Model Selection -->
+        <div class="button-container">
+          <button id="dive-btn">Dive Deeper</button>
+          <button id="ascend-btn">Dive Up</button>
+          <button id="reset-btn">Reset</button>
+
+          <div class="ndl-placeholder">
+            <label for="deco-model">Decompression Model:</label>
+            <select id="deco-model">
+              <option value="bühlmann">Bühlmann ZH-L16</option>
+              <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>
+              <option value="vpm">Varying Permeability Model (VPM)</option>
+              <option value="deepstops">Deep Stops Algorithm</option>
+              <option value="custom">Custom Algorithm</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dive Log -->
+      <div class="log-container">
+        <h2>Dive Log</h2>
+        <ul id="dive-log"></ul>
+      </div>
+    </div>
+
+    <!-- NDL and Graphs Container -->
+    <div id="ndl-container">
+      <div class="tab-container">
+        <button class="tab-btn active" onclick="openTab(event, 'ndl-page')">NDL Table</button>
+        <button class="tab-btn" onclick="openTab(event, 'graph-page')">Graphs</button>
+      </div>
+      <div id="dynamic-pages">
+        <!-- Pages will be generated dynamically here -->
+      </div>
+    </div>
+
+    <!-- Oxygen Toxicity Table Popup -->
+    <div id="toxicity-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Oxygen Toxicity Table</h2>
+        <table id="toxicity-table">
+          <thead>
+            <tr>
+              <th>Depth (m)</th>
+              <th>Absolute Pressure (ATA)</th>
+              <th>PPO₂ in Air (bar)</th>
+              <th>PPO₂ in 100% O₂ (bar)</th>
+              <th>Oxygen Toxicity Risk</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+
+    <!-- Dive Chart -->
+    <div class="chart-container">
+      <canvas id="diveChart"></canvas>
+    </div>
+
+    <!-- Gas Mixture Section -->
+    <div class="yellow-container">
+      <h2>Gas Mixture</h2>
+    <div class="gas-values">
+      <div class="gas-item">
+        <span class="value" id="o2">0.21</span>
+        <span class="label">O₂</span>
+      </div>
+      <div class="gas-item">
+        <span class="value" id="n2">0.79</span>
+        <span class="label">N₂</span>
+      </div>
+      <div class="gas-item">
+        <span class="value" id="he">0.00</span>
+        <span class="label">He</span>
+      </div>
+    </div>
+    <div class="gas-options">
+      <div class="gas-card selected"><img src="/static/images/air.webp" alt="Air"><span>Air</span></div>
+      <div class="gas-card"><img src="/static/images/ean32.webp" alt="EANx32"><span>EANx32</span></div>
+      <div class="gas-card"><img src="/static/images/ean36.webp" alt="EANx36"><span>EANx36</span></div>
+      <div class="gas-card"><img src="/static/images/ean40.webp" alt="EANx40"><span>EANx40</span></div>
+      <div class="gas-card"><img src="/static/images/enriched.webp" alt="Enriched"><span>Enriched</span></div>
+      <div class="gas-card"><img src="/static/images/trimix.webp" alt="Trimix"><span>Trimix</span></div>
+      <div class="gas-card"><img src="/static/images/rebreather.webp" alt="Rebreather"><span>Rebreather</span></div>
+    </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/script.js"></script>
+    <!-- Make sure that your script.js file defines functions like openTab() -->
+  </div>
+</body>
+</html>

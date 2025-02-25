@@ -1,0 +1,82 @@
+[
+    {
+        "timestamp": "2025-02-18 00:18:04",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 56.67,
+        "rgbm_factor": 0.91992,
+        "total_time": 9182.56,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:05",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.33,
+        "rgbm_factor": 0.83238,
+        "total_time": 9183.03,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:06",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 0.75317,
+        "total_time": 9183.97,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:07",
+        "depth": 40,
+        "pressure": 5.0,
+        "oxygen_toxicity": 1.05,
+        "ndl": 46.67,
+        "rgbm_factor": 0.68149,
+        "total_time": 9184.78,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:10",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 0.75,
+        "total_time": 9188.22,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:10",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.333333333333336,
+        "rgbm_factor": 0.83,
+        "total_time": 9188.44,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:10",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 56.666666666666664,
+        "rgbm_factor": 0.91,
+        "total_time": 9188.66,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 00:18:11",
+        "depth": 0,
+        "pressure": 1.0,
+        "oxygen_toxicity": 0.21,
+        "ndl": 60.0,
+        "rgbm_factor": 1.0,
+        "total_time": 9188.85,
+        "time_at_depth": 0
+    }
+]

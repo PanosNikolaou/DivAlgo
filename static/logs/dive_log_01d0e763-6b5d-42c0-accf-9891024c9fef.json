@@ -1,0 +1,12 @@
+[
+    {
+        "timestamp": "2025-02-19 01:30:40",
+        "depth": 90,
+        "pressure": 10.0,
+        "oxygen_toxicity": 2.1,
+        "ndl": 30.0,
+        "rgbm_factor": 0.41335,
+        "total_time": 743.79,
+        "time_at_depth": 1
+    }
+]

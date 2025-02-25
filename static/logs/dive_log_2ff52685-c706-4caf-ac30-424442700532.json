@@ -1,0 +1,52 @@
+[
+    {
+        "timestamp": "2025-02-18 22:39:24",
+        "depth": 10,
+        "pressure": 2.0,
+        "oxygen_toxicity": 0.42,
+        "ndl": 56.67,
+        "rgbm_factor": 0.91992,
+        "total_time": 8.01,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 22:39:25",
+        "depth": 20,
+        "pressure": 3.0,
+        "oxygen_toxicity": 0.63,
+        "ndl": 53.33,
+        "rgbm_factor": 0.83238,
+        "total_time": 8.01,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 22:39:27",
+        "depth": 30,
+        "pressure": 4.0,
+        "oxygen_toxicity": 0.84,
+        "ndl": 50.0,
+        "rgbm_factor": 0.75317,
+        "total_time": 9.42,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 22:39:28",
+        "depth": 40,
+        "pressure": 5.0,
+        "oxygen_toxicity": 1.05,
+        "ndl": 46.67,
+        "rgbm_factor": 0.68149,
+        "total_time": 10.44,
+        "time_at_depth": 1
+    },
+    {
+        "timestamp": "2025-02-18 22:39:29",
+        "depth": 50,
+        "pressure": 6.0,
+        "oxygen_toxicity": 1.26,
+        "ndl": 43.33,
+        "rgbm_factor": 0.61664,
+        "total_time": 10.44,
+        "time_at_depth": 1
+    }
+]

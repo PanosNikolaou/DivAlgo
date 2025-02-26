@@ -96,11 +96,12 @@ def save_dive_log(client_uuid, entry):
 
 
 # Global diver state
+# Global diver state
 state = {
     "depth": 0,
     "last_depth": 0,
-    "time_elapsed": 0,     # in seconds
-    "time_at_depth": 0,    # in seconds
+    "time_elapsed": 0,
+    "time_at_depth": 0,
     "depth_start_time": time.time(),
     "depth_durations": {},
     "ndl": 60,
@@ -109,13 +110,32 @@ state = {
     "oxygen_toxicity": 0.21,
     "oxygen_fraction": 0.21,
     "nitrogen_fraction": 0.79,
-    "selected_deco_model": "bühlmann"
+    "selected_deco_model": "bühlmann",
+    "use_rgbm_for_ndl": False  # <-- Add this
 }
 
 
-def calculate_rgbm(depth, time_at_depth):
-    """Calculate the RGBM factor with higher precision."""
-    return round((1 + time_at_depth / 60) * math.exp(-depth / 100), 5)
+def calculate_rgbm():
+    """
+    Calculate the RGBM factor with higher precision, using the global `state` structure.
+    """
+    depth = state["depth"]
+    time_at_depth = state["time_at_depth"]
+    oxygen_fraction = state["oxygen_fraction"]
+    nitrogen_fraction = state["nitrogen_fraction"]
+    helium_fraction = state.get("helium_fraction", 0.0)  # Default to 0 if not set
+
+    inert_gas_fraction = nitrogen_fraction + helium_fraction  # Inert gas load in the body
+    base_rgbm_factor = (1 + time_at_depth / 60) * math.exp(-depth / 100)
+
+    # Adjust RGBM factor based on the gas mix
+    gas_penalty_factor = 1 + (inert_gas_fraction - nitrogen_fraction) * 0.2  # Adjust based on inert gas fraction
+    state["rgbm_factor"] = round(base_rgbm_factor * gas_penalty_factor, 5)
+
+    print(f"🌊 Depth: {depth}m, Time: {time_at_depth}s, RGBM Factor: {state['rgbm_factor']}, "
+          f"Gas Mix: O₂={oxygen_fraction}, N₂={nitrogen_fraction}, He={helium_fraction}")
+
+    return state["rgbm_factor"]
 
 
 def update_time_at_depth():
@@ -142,7 +162,7 @@ def update_time_at_depth():
     state["depth_durations"][state["depth"]] += elapsed_at_depth
     state["time_at_depth"] = round(state["depth_durations"][state["depth"]], 2)
     state["depth_start_time"] = now
-    state["rgbm_factor"] = calculate_rgbm(state["depth"], state["time_at_depth"])
+    state["rgbm_factor"] = calculate_rgbm()
     print(f"🟢 DEBUG: Depth: {state['depth']}m, Time at Depth: {state['time_at_depth']} sec, RGBM: {state['rgbm_factor']:.5f}")
     state["last_depth"] = state["depth"]
 
@@ -215,7 +235,7 @@ def dive():
         state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
         state["pressure"] = round(1 + (state["depth"] / 10), 2)
         state["oxygen_toxicity"] = round(0.21 * state["pressure"], 2)
-        state["rgbm_factor"] = calculate_rgbm(state["depth"], state["time_at_depth"])
+        state["rgbm_factor"] = calculate_rgbm()
 
         log_entry = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -250,7 +270,7 @@ def ascend():
         state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
         state["pressure"] = round(1 + (state["depth"] / 10), 2)
         state["oxygen_toxicity"] = round(0.21 * state["pressure"], 2)
-        state["rgbm_factor"] = calculate_rgbm(state["depth"], state["time_at_depth"])
+        state["rgbm_factor"] = calculate_rgbm()
 
         log_entry = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -319,9 +339,14 @@ def get_state():
 
     ndl_value = calculate_ndl(depth, time_at_depth_min, oxygen_fraction, nitrogen_fraction, helium_fraction)
 
+    print("before:",state["rgbm_factor"] )
+    state["rgbm_factor"] = calculate_rgbm()
+    print("after:",state["rgbm_factor"] )
+
     if state.get("use_rgbm_for_ndl", False):
         ndl_value *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
         ndl_value = max(1, round(ndl_value, 2))  # Ensure NDL does not go below 1 min
+        print("use_rgbm_for_ndl",ndl_value)
 
     state["ndl"] = ndl_value
 
@@ -399,6 +424,13 @@ def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_f
     if math.isinf(ndl):
         ndl = 999
         print(f"⚠️ NDL was infinity, setting to {ndl:.2f} minutes")
+
+    # Apply RGBM adjustment if enabled
+    if state.get("use_rgbm_for_ndl", False):
+        ndl *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
+        print("RGBM Factor is:", state["rgbm_factor"]);
+        print("RGBM Factor is:", state["rgbm_factor"]);
+        ndl = max(1, round(ndl, 2))  # Ensure NDL does not go below 1 min
 
     print(f"✅ Final Computed NDL: {ndl:.2f} minutes (Limited by Tissue {limiting_tissue})\n")
     return round(ndl, 2)

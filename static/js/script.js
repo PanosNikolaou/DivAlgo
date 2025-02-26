@@ -239,12 +239,6 @@ function renderNDLPage(state) {
   return `
     <div id="ndl-page" class="tab-content">
       <h3>Bühlmann ZH-L16 Decompression Model</h3>
-      <div class="rgbm-options" id="rgbm-options" style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" id="rgbm-checkbox" disabled>
-        <label for="rgbm-checkbox" style="font-size: 14px; font-weight: 500; cursor: pointer;">
-          Calculate NDL with RGBM
-        </label>
-      </div>
       <div class="ndl-output">
         <p><strong>Current NDL:</strong> <span id="ndl-value">${state.ndl.toFixed(2)}</span> minutes</p>
       </div>
@@ -290,6 +284,7 @@ function fetchStateAndEnableRGBM() {
 
 // Function to toggle RGBM setting
 function toggleRGBM() {
+    console.log("toggleRGBM");
     let rgbmCheckbox = document.getElementById("rgbm-checkbox");
     let useRGBM = rgbmCheckbox.checked; // Get the current state from the UI
 
@@ -307,16 +302,16 @@ function toggleRGBM() {
 }
 
 // Call this function when the page loads
-window.onload = function () {
-    fetchStateAndEnableRGBM();
-    document.getElementById("rgbm-checkbox").addEventListener("change", toggleRGBM);
-};
-
-
-// Call this function when the page loads
-window.onload = function () {
-    fetchStateAndEnableRGBM();
-};
+//window.onload = function () {
+//    fetchStateAndEnableRGBM();
+//    document.getElementById("rgbm-checkbox").addEventListener("change", toggleRGBM);
+//};
+//
+//
+//// Call this function when the page loads
+//window.onload = function () {
+//    fetchStateAndEnableRGBM();
+//};
 
 
 // Call this function when the page loads
@@ -447,64 +442,80 @@ function fetchNDL() {
   fetch('/state')
     .then(response => response.json())
     .then(state => {
-      if (document.getElementById("ndl-value")) {
-        document.getElementById("ndl-value").textContent = state.ndl.toFixed(2);
-      }
-      if (document.getElementById("ndl")) {
-        document.getElementById("ndl").textContent = state.ndl.toFixed(2);
-      }
-      if (document.getElementById("rgbm_factor")) {
-        document.getElementById("rgbm_factor").textContent = state.rgbm_factor.toFixed(2);
-      }
-      if (document.getElementById("oxygen_toxicity")) {
-        document.getElementById("oxygen_toxicity").textContent = state.oxygen_toxicity.toFixed(2);
-      }
-//      if (document.getElementById("o2")) {
-//        document.getElementById("o2").textContent = state.oxygen_fraction;
-//      }
-//      if (document.getElementById("n2")) {
-//        document.getElementById("n2").textContent = state.nitrogen_fraction;
-//      }
+        try {
+          if (document.getElementById("ndl-value")) {
+            document.getElementById("ndl-value").textContent = state.ndl?.toFixed(2) ?? "N/A";
+          } else {
+            console.warn("❌ Element with ID 'ndl-value' not found.");
+          }
+
+          if (document.getElementById("ndl")) {
+            document.getElementById("ndl").textContent = state.ndl?.toFixed(2) ?? "N/A";
+          } else {
+            console.warn("❌ Element with ID 'ndl' not found.");
+          }
+
+          if (document.getElementById("rgbm")) {
+            document.getElementById("rgbm").textContent = state.rgbm_factor?.toFixed(2) ?? "N/A";
+          } else {
+            console.warn("❌ Element with ID 'rgbm' not found.");
+          }
+
+          if (document.getElementById("oxygen_toxicity")) {
+            document.getElementById("oxygen_toxicity").textContent = state.oxygen_toxicity?.toFixed(2) ?? "N/A";
+          } else {
+            console.warn("❌ Element with ID 'oxygen_toxicity' not found.");
+          }
+        } catch (error) {
+          console.error("🚨 Error updating UI elements:", error);
+        }
     })
     .catch(error => console.error("Error fetching NDL:", error));
 }
 
 // ----- DOMContentLoaded: Attach Listeners & Initialize -----
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("✅ Page loaded, initializing event listeners...");
+
   // Attach change listener for decompression model
   const decoModel = document.getElementById("deco-model");
   if (decoModel) {
-    decoModel.addEventListener("change", function() {
+    decoModel.addEventListener("change", function () {
       // Show/hide dynamic RGBM options based on selected value
       const rgbmOptions = document.getElementById("rgbm-options");
       if (rgbmOptions) {
-        rgbmOptions.style.display = (this.value === "rgbm") ? "block" : "none";
+        rgbmOptions.style.display = this.value === "rgbm" ? "block" : "none";
       }
+
       // Send selected model to backend
-      fetch('/set-deco-model', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deco_model: this.value })
+      fetch("/set-deco-model", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deco_model: this.value }),
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log(data.message);
-        fetchStateAndUpdate();
-      })
-      .catch(error => console.error("Error setting decompression model:", error));
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log(data.message);
+          fetchStateAndUpdate();
+        })
+        .catch((error) =>
+          console.error("Error setting decompression model:", error)
+        );
     });
+  } else {
+    console.error("❌ Decompression model dropdown (ID: 'deco-model') not found.");
   }
 
   // Preselect the Air card if not already marked (optional if already set in HTML)
-  const airCard = document.querySelector('.gas-card.selected');
+  const airCard = document.querySelector(".gas-card.selected");
   if (!airCard) {
-    const firstCard = document.querySelector('.gas-card');
-    if (firstCard) firstCard.classList.add('selected');
+    const firstCard = document.querySelector(".gas-card");
+    if (firstCard) firstCard.classList.add("selected");
   }
 
   // Update O₂/N₂ values based on the selected gas card
@@ -512,6 +523,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Fetch initial state and update dynamic pages
   fetchStateAndUpdate();
+
   console.log("✅ All event listeners attached successfully!");
 });
 
@@ -628,4 +640,4 @@ gasCards.forEach(card => {
 document.getElementById("dive-btn").onclick = dive;
 document.getElementById("ascend-btn").onclick = ascend;
 document.getElementById("reset-btn").onclick = resetSimulation;
-document.getElementById("rgbm-checkbox").addEventListener("change", toggleRGBM);
+document.getElementById("rgbm-checkbox").onclick = toggleRGBM;

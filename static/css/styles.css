@@ -16,7 +16,7 @@ body {
 }
 
 .logo {
-  height: 131px;
+  height: 100px;
   width: auto;
 }
 
@@ -239,13 +239,16 @@ img {
 
 /* Wrapper for Info Panel & Buttons */
 .info-button-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  width: 100%;
-  max-width: 900px;
-  gap: 30px;
-  padding: 5px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 900px;
+    gap: 30px;
+    padding: 5px 0;
+    flex-wrap: wrap;
+    align-content: stretch;
+    flex-direction: row;
 }
 
 .info-container {

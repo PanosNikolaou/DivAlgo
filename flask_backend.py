@@ -90,12 +90,12 @@ def save_dive_log(client_uuid, entry):
         json.dump(logs, file, indent=4)
     os.replace(temp_file, log_file)
 
-    print(f"📝 Saved Log Entry: Depth={entry['depth']}m, Time at Depth={entry['time_at_depth']} sec, RGBM={entry['rgbm_factor']:.5f}")
+    print(
+        f"📝 Saved Log Entry: Depth={entry['depth']}m, Time at Depth={entry['time_at_depth']} sec, RGBM={entry['rgbm_factor']:.5f}")
     log_dive(entry['depth'], entry['pressure'], entry['oxygen_toxicity'], entry['ndl'],
              entry['rgbm_factor'], entry['total_time'], entry['time_at_depth'])
 
 
-# Global diver state
 # Global diver state
 state = {
     "depth": 0,
@@ -103,15 +103,17 @@ state = {
     "time_elapsed": 0,
     "time_at_depth": 0,
     "depth_start_time": time.time(),
-    "depth_durations": {},
+    "depth_durations": defaultdict(float),  # Changed to defaultdict to avoid KeyError
     "ndl": 60,
     "rgbm_factor": 1.0,
     "pressure": 1.0,
     "oxygen_toxicity": 0.21,
     "oxygen_fraction": 0.21,
     "nitrogen_fraction": 0.79,
+    "helium_fraction": 0.0,  # Added explicit helium_fraction initialization
     "selected_deco_model": "bühlmann",
-    "use_rgbm_for_ndl": False  # <-- Add this
+    "use_rgbm_for_ndl": False,
+    "dive_start_time": None  # Initialize dive_start_time
 }
 
 
@@ -124,6 +126,10 @@ def calculate_rgbm():
     oxygen_fraction = state["oxygen_fraction"]
     nitrogen_fraction = state["nitrogen_fraction"]
     helium_fraction = state.get("helium_fraction", 0.0)  # Default to 0 if not set
+
+    # Prevent division by zero for time_at_depth
+    if time_at_depth < 0.1:
+        time_at_depth = 0.1
 
     inert_gas_fraction = nitrogen_fraction + helium_fraction  # Inert gas load in the body
     base_rgbm_factor = (1 + time_at_depth / 60) * math.exp(-depth / 100)
@@ -142,7 +148,8 @@ def update_time_at_depth():
     """Update dive time and recalc time at depth and RGBM factor."""
     now = time.time()
 
-    if "dive_start_time" not in state:
+    # Initialize dive_start_time if not set
+    if state["dive_start_time"] is None:
         state["dive_start_time"] = now
 
     state["time_elapsed"] = now - state["dive_start_time"]
@@ -155,15 +162,13 @@ def update_time_at_depth():
         return
 
     elapsed_at_depth = now - state["depth_start_time"]
-    if state["depth"] not in state["depth_durations"]:
-        print(f"New depth encountered: {state['depth']}m. Initializing duration tracking.")
-        state["depth_durations"][state["depth"]] = 0
-
+    # No need to check existence with defaultdict
     state["depth_durations"][state["depth"]] += elapsed_at_depth
     state["time_at_depth"] = round(state["depth_durations"][state["depth"]], 2)
     state["depth_start_time"] = now
     state["rgbm_factor"] = calculate_rgbm()
-    print(f"🟢 DEBUG: Depth: {state['depth']}m, Time at Depth: {state['time_at_depth']} sec, RGBM: {state['rgbm_factor']:.5f}")
+    print(
+        f"🟢 DEBUG: Depth: {state['depth']}m, Time at Depth: {state['time_at_depth']} sec, RGBM: {state['rgbm_factor']:.5f}")
     state["last_depth"] = state["depth"]
 
 
@@ -194,7 +199,8 @@ def calculate_ndl_stops():
         print(f"📩 Received: NDL={ndl}, Depth={depth}, Pressure={pressure}, O₂ Toxicity={oxygen_toxicity}, "
               f"RGBM={rgbm_factor}, Time Elapsed={time_elapsed}, Time at Depth={time_at_depth}, O2={oxygen_fraction}, N₂={nitrogen_fraction}, He={helium_fraction}")
 
-        stops = generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed, time_at_depth)
+        stops = generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed,
+                                             time_at_depth)
         return jsonify({"stops": stops})
 
     except Exception as e:
@@ -204,18 +210,32 @@ def calculate_ndl_stops():
 
 
 def generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed, time_at_depth):
+    """Generate decompression stops based on dive parameters."""
     stops = []
     if ndl <= 0:
-        stop_depth = depth - 10  # Example: Stop every 10 meters
+        # Start with a reasonable first stop depth
+        stop_depth = (depth // 10) * 10 - 10  # Round to nearest 10m and subtract 10
+
+        # Make sure stop_depth is at least 3m and not greater than current depth - 3m
+        stop_depth = min(max(3, stop_depth), depth - 3)
+
         while stop_depth > 0:
-            stop_time = max(3, abs(ndl))
+            # Calculate stop time based on depth and NDL deficit
+            stop_time = max(3, int(abs(ndl) * (1 + (stop_depth / depth) * 0.5)))
             reason = "NDL exceeded" if ndl < 0 else "NDL reached"
+
             stops.append({
                 "depth": stop_depth,
                 "duration": stop_time,
                 "reason": reason
             })
-            stop_depth -= 10
+
+            # More frequent stops at shallower depths
+            if stop_depth > 9:
+                stop_depth -= 3
+            else:
+                stop_depth -= 3
+
     return stops
 
 
@@ -230,11 +250,13 @@ def dive():
         state["last_depth"] = state["depth"]
         state["depth"] += 10
         state["depth_start_time"] = time.time()
-        state["time_at_depth"] = state["depth_durations"].get(state["depth"], 1)
+        state["time_at_depth"] = state["depth_durations"][state["depth"]]  # No need for .get() with defaultdict
 
+        # Calculate NDL with proper time conversion (seconds to minutes)
         state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
         state["pressure"] = round(1 + (state["depth"] / 10), 2)
-        state["oxygen_toxicity"] = round(0.21 * state["pressure"], 2)
+        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"],
+                                         2)  # Fixed to use oxygen_fraction
         state["rgbm_factor"] = calculate_rgbm()
 
         log_entry = {
@@ -265,11 +287,12 @@ def ascend():
         if state["depth"] < 0:
             state["depth"] = 0
         state["depth_start_time"] = time.time()
-        state["time_at_depth"] = state["depth_durations"].get(state["depth"], 1)
+        state["time_at_depth"] = state["depth_durations"][state["depth"]]  # No need for .get() with defaultdict
 
         state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
         state["pressure"] = round(1 + (state["depth"] / 10), 2)
-        state["oxygen_toxicity"] = round(0.21 * state["pressure"], 2)
+        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"],
+                                         2)  # Fixed to use oxygen_fraction
         state["rgbm_factor"] = calculate_rgbm()
 
         log_entry = {
@@ -298,8 +321,12 @@ def get_logs():
     print(f"Loaded logs: {logs}")
     return jsonify(logs)
 
+
 @app.route('/state', methods=['GET'])
 def get_state():
+    # Update time tracking before returning state
+    update_time_at_depth()
+
     log_entry = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "depth": state["depth"],
@@ -318,8 +345,6 @@ def get_state():
     log_dive(log_entry['depth'], log_entry['pressure'], log_entry['oxygen_toxicity'],
              log_entry['ndl'], log_entry['rgbm_factor'], log_entry['total_time'], log_entry['time_at_depth'])
 
-    update_time_at_depth()
-
     depth = state["depth"]
     pressure = state["pressure"]
     oxygen_toxicity = state["oxygen_toxicity"]
@@ -334,19 +359,20 @@ def get_state():
     time_at_depth_min = round(time_at_depth_sec / 60, 2)
     time_elapsed_min = round(time_elapsed_sec / 60, 2)
 
+    # Ensure a minimum value for time_at_depth_min to avoid division by zero issues
     if time_at_depth_min < 0.01:
         time_at_depth_min = 0.01
 
     ndl_value = calculate_ndl(depth, time_at_depth_min, oxygen_fraction, nitrogen_fraction, helium_fraction)
 
-    print("before:",state["rgbm_factor"] )
+    # Calculate RGBM factor (removed redundant print statements)
     state["rgbm_factor"] = calculate_rgbm()
-    print("after:",state["rgbm_factor"] )
 
     if state.get("use_rgbm_for_ndl", False):
-        ndl_value *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
+        # Make sure rgbm_factor is not zero before division
+        if state["rgbm_factor"] > 0:
+            ndl_value *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
         ndl_value = max(1, round(ndl_value, 2))  # Ensure NDL does not go below 1 min
-        print("use_rgbm_for_ndl",ndl_value)
 
     state["ndl"] = ndl_value
 
@@ -362,9 +388,10 @@ def get_state():
         "time_at_depth_minutes": time_at_depth_min,
         "time_elapsed_minutes": time_elapsed_min,
         "selected_deco_model": selected_deco_model,
+        "use_rgbm_for_ndl": state.get("use_rgbm_for_ndl", False),  # Add to response
         "buhlmann_ndl": {
-            "gas_type": "Air (21% O₂, 79% N₂)",
-            "hlf_times": [4, 8, 12.5, 18.5, 27, 38.3, 54.3, 77, 109, 146],
+            "gas_type": f"{oxygen_fraction * 100:.0f}% O₂, {nitrogen_fraction * 100:.0f}% N₂, {helium_fraction * 100:.0f}% He",
+            "hlf_times": [tissue["half_time"] for tissue in buhlmann_tissues],
             "compartments": buhlmann_tissues
         }
     })
@@ -382,7 +409,8 @@ def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_f
        time_at_depth_minutes is expected in minutes.
        Inert gas loading is computed from nitrogen and helium.
     """
-    time_at_depth_minutes = round(time_at_depth_minutes, 2)
+    # Ensure time_at_depth_minutes is positive to avoid math domain errors
+    time_at_depth_minutes = max(0.01, round(time_at_depth_minutes, 2))
     surface_pressure = 1.0
     pressure_at_depth = surface_pressure + (depth / 10)
 
@@ -412,25 +440,33 @@ def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_f
         print(f"   → Max Inert Tension: {max_inert_tension:.5f}")
 
         try:
-            compartment_ndl = (math.log(1 - (max_inert_tension / inert_gas_pressure)) / -k) - time_at_depth_minutes
+            # Check for negative or zero result in the logarithm
+            log_arg = 1 - (max_inert_tension / inert_gas_pressure)
+            if log_arg <= 0:
+                print(f"🚨 Log argument <= 0 in tissue {tissue['tissue']}: {log_arg}")
+                continue
+
+            compartment_ndl = (math.log(log_arg) / -k) - time_at_depth_minutes
             if compartment_ndl < ndl:
                 ndl = compartment_ndl
                 limiting_tissue = tissue["tissue"]
                 print(f"🔄 New limiting compartment: {tissue['tissue']} (NDL: {ndl:.2f} min)")
-        except ValueError:
-            print(f"🚨 Log error in tissue {tissue['tissue']} (invalid ratio).")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"🚨 Error in tissue {tissue['tissue']}: {str(e)}")
             continue
 
-    if math.isinf(ndl):
+    if math.isinf(ndl) or ndl > 999:
         ndl = 999
-        print(f"⚠️ NDL was infinity, setting to {ndl:.2f} minutes")
+        print(f"⚠️ NDL was infinity or too large, setting to {ndl:.2f} minutes")
+    elif ndl < 0:
+        # Handle negative NDL (decompression required)
+        print(f"⚠️ Negative NDL calculated: {ndl:.2f} minutes. Decompression required.")
+        ndl = 0
 
-    # Apply RGBM adjustment if enabled
-    if state.get("use_rgbm_for_ndl", False):
+    # Apply RGBM adjustment if enabled and rgbm_factor is valid
+    if state.get("use_rgbm_for_ndl", False) and state["rgbm_factor"] > 0:
         ndl *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
-        print("RGBM Factor is:", state["rgbm_factor"]);
-        print("RGBM Factor is:", state["rgbm_factor"]);
-        ndl = max(1, round(ndl, 2))  # Ensure NDL does not go below 1 min
+        ndl = max(0, round(ndl, 2))  # Ensure NDL is not negative
 
     print(f"✅ Final Computed NDL: {ndl:.2f} minutes (Limited by Tissue {limiting_tissue})\n")
     return round(ndl, 2)
@@ -450,14 +486,17 @@ def reset():
         "time_elapsed": 0,
         "time_at_depth": 0,
         "depth_start_time": time.time(),
-        "depth_durations": {},
+        "depth_durations": defaultdict(float),  # Use defaultdict to avoid KeyErrors
         "ndl": 60,
         "rgbm_factor": 1.0,
         "pressure": 1.0,
         "oxygen_toxicity": 0.21,
         "oxygen_fraction": 0.21,
         "nitrogen_fraction": 0.79,
-        "selected_deco_model": "bühlmann"
+        "helium_fraction": 0.0,
+        "selected_deco_model": "bühlmann",
+        "use_rgbm_for_ndl": False,
+        "dive_start_time": None  # Reset dive_start_time
     }
     return jsonify({"message": "Simulation reset successfully"})
 
@@ -508,18 +547,39 @@ def update_gas_mix():
         if not data:
             return jsonify({"error": "No JSON data received"}), 400
 
+        # Get new gas mix values
         oxygen_fraction = float(data.get("oxygen_fraction", state.get("oxygen_fraction", 0.21)))
         nitrogen_fraction = float(data.get("nitrogen_fraction", state.get("nitrogen_fraction", 0.79)))
         helium_fraction = float(data.get("helium_fraction", state.get("helium_fraction", 0.0)))
 
-        state["oxygen_fraction"] = oxygen_fraction
-        state["nitrogen_fraction"] = nitrogen_fraction
-        state["helium_fraction"] = helium_fraction
+        # Validate that gas fractions sum to 1.0 (or very close to 1.0 accounting for floating point errors)
+        total = oxygen_fraction + nitrogen_fraction + helium_fraction
+        if not (0.999 <= total <= 1.001):
+            # Normalize if needed
+            factor = 1.0 / total
+            oxygen_fraction *= factor
+            nitrogen_fraction *= factor
+            helium_fraction *= factor
+
+        # Update state
+        state["oxygen_fraction"] = round(oxygen_fraction, 5)
+        state["nitrogen_fraction"] = round(nitrogen_fraction, 5)
+        state["helium_fraction"] = round(helium_fraction, 5)
+
+        # Recalculate oxygen toxicity based on new gas mix
+        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"], 2)
 
         print(f"Updated gas mix: O₂={oxygen_fraction}, N₂={nitrogen_fraction}, He={helium_fraction}")
-        return jsonify({"message": "Gas mix updated", "state": state})
+        return jsonify({
+            "message": "Gas mix updated",
+            "oxygen_fraction": state["oxygen_fraction"],
+            "nitrogen_fraction": state["nitrogen_fraction"],
+            "helium_fraction": state["helium_fraction"],
+            "oxygen_toxicity": state["oxygen_toxicity"]
+        })
     except Exception as e:
         print(f"Error updating gas mix: {str(e)}")
+        traceback.print_exc()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 

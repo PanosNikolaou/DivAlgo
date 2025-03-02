@@ -38,11 +38,10 @@
           <div class="info"><p>Depth:</p> <span id="depth">0</span> m</div>
           <div class="info"><p>Pressure:</p> <span id="pressure">1.00</span> atm</div>
           <div class="info"><p>NDL:</p> <span id="ndl">60.00</span> min</div>
-          <!-- Removed duplicate NDL element. If you intended to show a separate value, rename the label and/or id -->
           <div class="info">
             <p>Oxygen Toxicity:</p>
             <span id="toxicity">0.21</span> PO₂
-            <button id="info-btn" class="info-button" disabled hidden>ℹ️</button>
+            <button id="info-btn" class="info-button">ℹ️</button>
           </div>
           <div class="info"><p>RGBM Factor:</p> <span id="rgbm">1.00</span></div>
           <div class="info"><p>Time Elapsed:</p> <span id="time">33</span> sec</div>
@@ -54,12 +53,12 @@
           <button id="dive-btn">Dive Deeper</button>
           <button id="ascend-btn">Dive Up</button>
           <button id="reset-btn">Reset</button>
-      <div class="rgbm-options" id="rgbm-options" style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" id="rgbm-checkbox">
-        <label for="rgbm-checkbox" style="font-size: 14px; font-weight: 500; cursor: pointer;">
-          Integrate RGBM in NDL
-        </label>
-      </div>
+          <div class="rgbm-options" id="rgbm-options" style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="rgbm-checkbox">
+            <label for="rgbm-checkbox" style="font-size: 14px; font-weight: 500; cursor: pointer;">
+              Integrate RGBM in NDL
+            </label>
+          </div>
           <div class="ndl-placeholder">
             <label for="deco-model">Decompression Model:</label>
             <select id="deco-model">
@@ -88,6 +87,14 @@
       </div>
       <div id="dynamic-pages">
         <!-- Pages will be generated dynamically here -->
+        <div id="ndl-page" class="tab-content">
+          <h2>No Decompression Limits (NDL)</h2>
+          <div id="ndl-table-container"></div>
+        </div>
+        <div id="graph-page" class="tab-content">
+          <h2>Pressure and Tissue Saturation Graphs</h2>
+          <div id="graphs-container"></div>
+        </div>
       </div>
     </div>
 
@@ -106,6 +113,9 @@
               <th>Oxygen Toxicity Risk</th>
             </tr>
           </thead>
+          <tbody>
+            <!-- Table rows will be inserted by JavaScript -->
+          </tbody>
         </table>
       </div>
     </div>
@@ -118,34 +128,33 @@
     <!-- Gas Mixture Section -->
     <div class="yellow-container">
       <h2>Gas Mixture</h2>
-    <div class="gas-values">
-      <div class="gas-item">
-        <span class="value" id="o2">0.21</span>
-        <span class="label">O₂</span>
+      <div class="gas-values">
+        <div class="gas-item">
+          <span class="value" id="o2">0.21</span>
+          <span class="label">O₂</span>
+        </div>
+        <div class="gas-item">
+          <span class="value" id="n2">0.79</span>
+          <span class="label">N₂</span>
+        </div>
+        <div class="gas-item">
+          <span class="value" id="he">0.00</span>
+          <span class="label">He</span>
+        </div>
       </div>
-      <div class="gas-item">
-        <span class="value" id="n2">0.79</span>
-        <span class="label">N₂</span>
+      <div class="gas-options">
+        <div class="gas-card selected" data-gas="air"><img src="/static/images/air.webp" alt="Air"><span>Air</span></div>
+        <div class="gas-card" data-gas="ean32"><img src="/static/images/ean32.webp" alt="EANx32"><span>EANx32</span></div>
+        <div class="gas-card" data-gas="ean36"><img src="/static/images/ean36.webp" alt="EANx36"><span>EANx36</span></div>
+        <div class="gas-card" data-gas="ean40"><img src="/static/images/ean40.webp" alt="EANx40"><span>EANx40</span></div>
+        <div class="gas-card" data-gas="enriched"><img src="/static/images/enriched.webp" alt="Enriched"><span>Enriched</span></div>
+        <div class="gas-card" data-gas="trimix"><img src="/static/images/trimix.webp" alt="Trimix"><span>Trimix</span></div>
+        <div class="gas-card" data-gas="rebreather"><img src="/static/images/rebreather.webp" alt="Rebreather"><span>Rebreather</span></div>
       </div>
-      <div class="gas-item">
-        <span class="value" id="he">0.00</span>
-        <span class="label">He</span>
-      </div>
-    </div>
-    <div class="gas-options">
-      <div class="gas-card selected"><img src="/static/images/air.webp" alt="Air"><span>Air</span></div>
-      <div class="gas-card"><img src="/static/images/ean32.webp" alt="EANx32"><span>EANx32</span></div>
-      <div class="gas-card"><img src="/static/images/ean36.webp" alt="EANx36"><span>EANx36</span></div>
-      <div class="gas-card"><img src="/static/images/ean40.webp" alt="EANx40"><span>EANx40</span></div>
-      <div class="gas-card"><img src="/static/images/enriched.webp" alt="Enriched"><span>Enriched</span></div>
-      <div class="gas-card"><img src="/static/images/trimix.webp" alt="Trimix"><span>Trimix</span></div>
-      <div class="gas-card"><img src="/static/images/rebreather.webp" alt="Rebreather"><span>Rebreather</span></div>
-    </div>
     </div>
 
     <!-- JavaScript -->
     <script src="/static/js/script.js"></script>
-    <!-- Make sure that your script.js file defines functions like openTab() -->
   </div>
 </body>
 </html>

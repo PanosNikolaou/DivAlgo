@@ -1,7 +1,7 @@
-# DivePlanner API
+# Divalgo DivePlanner API
 
 ## 📌 Overview
-DivePlanner is a Flask-based API designed to assist with dive planning by simulating depth, time at depth, no-decompression limits (NDL), decompression stops, and gas mixture calculations. It includes models like **Bühlmann ZH-L16** and **RGBM** for dive calculations.
+Divalgo is a Flask-based API designed to assist with dive planning by simulating depth, time at depth, no-decompression limits (NDL), decompression stops, and gas mixture calculations. It includes models like **Bühlmann ZH-L16** and **RGBM** for dive calculations.
 
 ## 🚀 Features
 - **Dive Simulation**: Track depth, pressure, NDL, and RGBM factors.
@@ -18,8 +18,8 @@ DivePlanner is a Flask-based API designed to assist with dive planning by simula
 ## 📦 Installation
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/your-repo/diveplanner.git
-cd diveplanner
+git clone https://github.com/your-repo/Divalgo.git
+cd Divalgo
 ```
 
 ### 2️⃣ Set Up Virtual Environment
@@ -96,7 +96,7 @@ curl -X POST http://127.0.0.1:5000/update_gas_mix -H "Content-Type: application/
 ---
 
 ## 🌍 Web Interface Features
-The frontend (`diveplanner.html`) provides:
+The frontend (`Divalgo.html`) provides:
 - **Live Dive Data**: Displays real-time values for depth, pressure, oxygen toxicity, NDL, and RGBM factors.
 - **Diver Animation**: Visual representation of depth changes.
 - **Decompression Model Selection**: Choose between Bühlmann, RGBM, VPM, or custom models.

@@ -1,4 +1,4 @@
-# Divalgo DivePlanner API
+# DivAlgo - A Diving Decompression Algorithmic Simulator
 
 ## 📌 Overview
 Divalgo is a Flask-based API designed to assist with dive planning by simulating depth, time at depth, no-decompression limits (NDL), decompression stops, and gas mixture calculations. It includes models like **Bühlmann ZH-L16** and **RGBM** for dive calculations.

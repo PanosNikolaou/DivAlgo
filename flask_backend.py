@@ -372,7 +372,7 @@ def get_state():
         # Make sure rgbm_factor is not zero before division
         if state["rgbm_factor"] > 0:
             ndl_value *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
-        ndl_value = max(1, round(ndl_value, 2))  # Ensure NDL does not go below 1 min
+        ndl_value = round(ndl_value, 2)  # Ensure NDL does not go below 1 min
 
     state["ndl"] = ndl_value
 
@@ -455,20 +455,28 @@ def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_f
             print(f"🚨 Error in tissue {tissue['tissue']}: {str(e)}")
             continue
 
+    deco_required = False  # Flag to indicate decompression is required
+
+    # Handle extreme values
     if math.isinf(ndl) or ndl > 999:
         ndl = 999
         print(f"⚠️ NDL was infinity or too large, setting to {ndl:.2f} minutes")
-    elif ndl < 0:
-        # Handle negative NDL (decompression required)
+
+    # Allow negative NDL and set deco_required flag
+    if ndl < 0:
+        deco_required = True
         print(f"⚠️ Negative NDL calculated: {ndl:.2f} minutes. Decompression required.")
-        ndl = 0
 
-    # Apply RGBM adjustment if enabled and rgbm_factor is valid
-    if state.get("use_rgbm_for_ndl", False) and state["rgbm_factor"] > 0:
-        ndl *= (1 / state["rgbm_factor"])  # Adjust NDL using RGBM factor
-        ndl = max(0, round(ndl, 2))  # Ensure NDL is not negative
+    # Apply RGBM adjustment if enabled
+    if state.get("use_rgbm_for_ndl", False):
+        rgbm_factor = state.get("rgbm_factor", 1)
+        if rgbm_factor > 0:
+            ndl /= rgbm_factor  # Adjust NDL using RGBM factor
+            ndl = round(ndl, 2)  # Keep precision
 
-    print(f"✅ Final Computed NDL: {ndl:.2f} minutes (Limited by Tissue {limiting_tissue})\n")
+    # print(f"✅ Final Computed NDL: {ndl:.2f} minutes (Limited by Tissue {limiting_tissue})\n")
+    # return {"ndl": round(ndl, 2), "deco_required": deco_required}
+
     return round(ndl, 2)
 
 

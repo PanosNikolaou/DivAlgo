@@ -450,7 +450,7 @@ function fetchNDL() {
           }
 
           if (document.getElementById("ndl")) {
-            document.getElementById("ndl").textContent = state.ndl?.toFixed(2) ?? "N/A";
+            document.getElementById("ndl").textContent = state.accumulated_ndl?.toFixed(2) ?? "N/A";
           } else {
             console.warn("❌ Element with ID 'ndl' not found.");
           }

@@ -636,6 +636,51 @@ gasCards.forEach(card => {
   });
 });
 
+// Function to toggle PADI table lookup
+function togglePadiNDL() {
+  // Read current state from the client-side state object
+  let currentStatus = state.use_padi_ndl || false;
+  let newStatus = !currentStatus;
+
+  // Send the new status to the backend
+  fetch('/toggle-padi-ndl', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Client-UUID': clientUUID
+      },
+      body: JSON.stringify({ use_padi_ndl: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log("PADI tables lookup toggled:", data);
+      // Update the button text based on new state
+      document.getElementById("padi-toggle-btn").innerText = newStatus ? "Disable PADI Tables Lookup" : "Enable PADI Tables Lookup";
+      // Update local state variable to match backend
+      state.use_padi_ndl = newStatus;
+      fetchStateAndUpdate(); // Refresh state display
+    })
+    .catch(error => console.error("Error toggling PADI NDL lookup:", error));
+}
+
+let lastNDL = 0;
+
+function updateNDLDisplay(newNDL) {
+  // Smooth the NDL update using a simple linear interpolation (adjust alpha as needed)
+  const alpha = 0.1; // smaller alpha -> smoother, slower update
+  lastNDL = lastNDL + alpha * (newNDL - lastNDL);
+  document.getElementById("ndl-value").textContent = lastNDL.toFixed(2);
+}
+
+// Attach event listener to the button when the page loads
+document.addEventListener("DOMContentLoaded", function () {
+  const padiToggleBtn = document.getElementById("padi-toggle-btn");
+  if (padiToggleBtn) {
+    padiToggleBtn.onclick = togglePadiNDL;
+  }
+});
+
+
 // ----- Button Click Handlers -----
 document.getElementById("dive-btn").onclick = dive;
 document.getElementById("ascend-btn").onclick = ascend;

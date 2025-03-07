@@ -12,6 +12,19 @@ app = Flask(__name__)
 swagger = Swagger(app)
 
 # Define Bühlmann tissue compartments
+# buhlmann_tissues = [
+#     {"tissue": 1, "half_time": 4, "M-value": 1.57},
+#     {"tissue": 2, "half_time": 8, "M-value": 1.42},
+#     {"tissue": 3, "half_time": 12.5, "M-value": 1.34},
+#     {"tissue": 4, "half_time": 18.5, "M-value": 1.28},
+#     {"tissue": 5, "half_time": 27, "M-value": 1.23},
+#     {"tissue": 6, "half_time": 38.3, "M-value": 1.20},
+#     {"tissue": 7, "half_time": 54.3, "M-value": 1.17},
+#     {"tissue": 8, "half_time": 77, "M-value": 1.14},
+#     {"tissue": 9, "half_time": 109, "M-value": 1.11},
+#     {"tissue": 10, "half_time": 146, "M-value": 1.08}
+# ]
+# Global tissue compartments using PADI-based values:
 buhlmann_tissues = [
     {"tissue": 1, "half_time": 4, "M-value": 1.57},
     {"tissue": 2, "half_time": 8, "M-value": 1.42},
@@ -27,6 +40,78 @@ buhlmann_tissues = [
 
 # Global dive log (in-memory) for debugging
 dive_log = []
+
+
+def padi_ndl_lookup():
+    """
+    Calculate the residual no-decompression limit (NDL) based on the PADI Recreational Dive Planner.
+
+    This version uses a table where depths are specified in meters.
+    The table below is based on the conversion of the following values from feet:
+
+         Depth (ft) : NDL_max (min)
+           40       : 205    --> 12.2 m : 205 min
+           50       : 147    --> 15.2 m : 147 min
+           60       : 100    --> 18.3 m : 100 min
+           70       : 65     --> 21.3 m : 65 min
+           80       : 45     --> 24.4 m : 45 min
+           90       : 35     --> 27.4 m : 35 min
+           100      : 25     --> 30.5 m : 25 min
+           110      : 20     --> 33.5 m : 20 min
+           120      : 15     --> 36.6 m : 15 min
+           130      : 10     --> 39.6 m : 10 min
+           140      : 5      --> 42.7 m : 5 min
+
+    The function looks up (or linearly interpolates) the maximum allowed bottom time (NDL_max)
+    for the current depth (in meters) stored in the global `state`. It then subtracts the
+    actual bottom time (in minutes) to yield the residual NDL.
+    """
+    # Get the current depth in meters
+    depth_m = state.get("depth", 0)
+
+    # Define the PADI table with depths in meters and NDL_max in minutes.
+    padi_table = {
+        12.2: 205,
+        15.2: 147,
+        18.3: 100,
+        21.3: 65,
+        24.4: 45,
+        27.4: 35,
+        30.5: 25,
+        33.5: 20,
+        36.6: 15,
+        39.6: 10,
+        42.7: 5,
+    }
+
+    # Get sorted depth values from the table.
+    depths = sorted(padi_table.keys())
+
+    # If the current depth is shallower than the shallowest table entry, use that value.
+    if depth_m <= depths[0]:
+        ndl_max = padi_table[depths[0]]
+    # If the current depth exceeds the deepest entry, use the minimum available NDL.
+    elif depth_m >= depths[-1]:
+        ndl_max = padi_table[depths[-1]]
+    else:
+        # Otherwise, interpolate linearly between the two nearest depths.
+        for i in range(1, len(depths)):
+            if depth_m < depths[i]:
+                lower_depth = depths[i - 1]
+                upper_depth = depths[i]
+                lower_ndl = padi_table[lower_depth]
+                upper_ndl = padi_table[upper_depth]
+                fraction = (depth_m - lower_depth) / (upper_depth - lower_depth)
+                ndl_max = lower_ndl + fraction * (upper_ndl - lower_ndl)
+                break
+
+    # Get the actual bottom time (in minutes) from the state (time_at_depth is in seconds)
+    actual_bottom_time = state.get("time_at_depth", 0) / 60.0
+
+    # Residual NDL is the maximum allowed time minus the actual bottom time.
+    residual_ndl = ndl_max - actual_bottom_time
+
+    return round(residual_ndl, 2)
 
 
 def log_dive(depth, pressure, o2_toxicity, ndl, rgbm_factor, time_elapsed, time_at_depth):
@@ -157,98 +242,334 @@ def calculate_rgbm():
     return state["rgbm_factor"]
 
 
+# def calculate_accumulated_ndl():
+#     """
+#     Calculate the accumulated NDL using the Bühlmann decompression model equations.
+#
+#     For each tissue compartment, the tissue tension is updated using:
+#         P(t) = P_A + (P(0) - P_A) * exp(-k*t)
+#     where k = ln(2)/half_time and P_A is the ambient pressure at the compartment's depth.
+#
+#     When the tissue compartment includes Bühlmann coefficients (a and b), the maximum allowed
+#     tissue tension is:
+#         P_max = (P_A - a) / b
+#     and the additional time Δt allowed is obtained by solving:
+#         P_A - (P_A - P_current) * exp(-k*Δt) = P_max,
+#     which yields:
+#         Δt = -1/k * ln((P_A - P_max) / (P_A - P_current))
+#
+#     Negative Δt values indicate that the tissue is already over its limit.
+#     If a and b are not provided, a simplified approach using an M-value is used.
+#     """
+#     # Initialize tissue gas tensions for each compartment (starting at 0)
+#     tissue_tensions = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
+#     surface_pressure = 1.0
+#
+#     # Process each dive log entry sequentially.
+#     for entry in dive_log:
+#         # Support both "depth" and "Depth", similarly for time at depth.
+#         d = float(entry.get("depth", entry.get("Depth", 0)))
+#         t_sec = float(entry.get("time_at_depth", entry.get("Time at Depth", 0)))
+#         t_min = t_sec / 60.0  # Convert seconds to minutes
+#
+#         # Calculate ambient pressure at the segment's depth.
+#         pressure_at_depth = surface_pressure + (d / 10)
+#         inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) +
+#                                                     state.get("helium_fraction", 0.0))
+#         # Update each tissue compartment tension using exponential uptake:
+#         for tissue in buhlmann_tissues:
+#             tissue_id = tissue["tissue"]
+#             half_time = tissue["half_time"]
+#             k = math.log(2) / half_time
+#             P_old = tissue_tensions[tissue_id]
+#             # Equation: P(t) = P_A + (P(0) - P_A) * exp(-k*t)
+#             P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * t_min)
+#             tissue_tensions[tissue_id] = P_new
+#
+#     # Calculate the additional time (NDL) allowed at the current depth for each tissue.
+#     current_depth = state["depth"]
+#     ambient_pressure = surface_pressure + (current_depth / 10)
+#     ndl_values = []
+#     for tissue in buhlmann_tissues:
+#         tissue_id = tissue["tissue"]
+#         half_time = tissue["half_time"]
+#         k = math.log(2) / half_time
+#         current_tension = tissue_tensions[tissue_id]
+#         # If Bühlmann coefficients are provided, use them.
+#         a = tissue.get("a")
+#         b = tissue.get("b")
+#         if a is not None and b is not None:
+#             # Maximum allowable tissue tension according to Bühlmann:
+#             P_max = (ambient_pressure - a) / b
+#             numerator = ambient_pressure - P_max
+#             denominator = ambient_pressure - current_tension
+#             if denominator == 0:
+#                 ndl = 0
+#             else:
+#                 try:
+#                     ratio = numerator / denominator
+#                     ndl = -1 / k * math.log(ratio)
+#                 except Exception:
+#                     ndl = 0
+#         else:
+#             # Fallback: use the simplified M-value method.
+#             max_tension = tissue.get("M-value", 1.0) * surface_pressure
+#             numerator = ambient_pressure - max_tension
+#             denominator = ambient_pressure - current_tension
+#             if denominator == 0:
+#                 ndl = 0
+#             else:
+#                 try:
+#                     ratio = numerator / denominator
+#                     ndl = -1 / k * math.log(ratio)
+#                 except Exception:
+#                     ndl = 0
+#         ndl_values.append(ndl)
+#
+#     # Combine negative NDL values if any exist, otherwise use the smallest positive value.
+#     negatives = [ndl for ndl in ndl_values if ndl < 0]
+#     if negatives:
+#         accumulated_ndl = sum(negatives)
+#     else:
+#         accumulated_ndl = min(ndl_values) if ndl_values else 0
+#     return round(accumulated_ndl, 2)
+# def calculate_accumulated_ndl():
+#     """
+#     Calculate the accumulated NDL using either the Bühlmann decompression model equations
+#     or the PADI Recreational Dive Planner table, depending on a flag in the state.
+#
+#     For each tissue compartment, the tissue tension is updated using:
+#         P(t2) = P_A + (P(t1) - P_A) * exp(-k*(t2-t1))
+#     where k = ln(2)/half_time and P_A is the ambient pressure at the compartment's depth.
+#
+#     When the tissue compartment includes Bühlmann coefficients (a and b), the maximum allowed
+#     tissue tension is:
+#         P_max = (P_A - a) / b
+#     and the additional time Δt allowed is obtained by solving:
+#         P_A - (P_A - P_current) * exp(-k*Δt) = P_max,
+#     which yields:
+#         Δt = -1/k * ln((P_A - P_max) / (P_A - P_current))
+#
+#     Negative Δt values indicate that the tissue is already over its limit.
+#     If state["use_padi_ndl"] is True, the PADI table-based residual NDL is returned.
+#     """
+#     # Use the PADI Recreational Dive Planner method if indicated.
+#     if state.get("use_padi_ndl", False):
+#         return padi_ndl_lookup()
+#
+#     # Ensure we have some log entries.
+#     if not dive_log:
+#         return 0
+#
+#     # Initialize tissue gas tensions for each compartment (starting at 0)
+#     tissue_tensions = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
+#     surface_pressure = 1.0
+#
+#     # Sort the dive log by cumulative time at depth.
+#     sorted_log = sorted(dive_log, key=lambda e: float(e.get("time_at_depth", e.get("Time at Depth", 0))))
+#     previous_time = 0.0
+#
+#     for entry in sorted_log:
+#         # Extract current cumulative time (in seconds)
+#         current_time = float(entry.get("time_at_depth", entry.get("Time at Depth", 0)))
+#         dt = (current_time - previous_time) / 60.0  # convert difference to minutes
+#         previous_time = current_time
+#         if dt <= 0:
+#             continue  # Skip if no time has elapsed
+#
+#         # Get the depth for this log entry
+#         d = float(entry.get("depth", entry.get("Depth", 0)))
+#         # Ambient pressure at this segment (assuming 1 atm at surface and 1 atm per 10m)
+#         pressure_at_depth = surface_pressure + (d / 10)
+#         inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) +
+#                                                   state.get("helium_fraction", 0.0))
+#         # Update each tissue compartment using the time increment dt:
+#         for tissue in buhlmann_tissues:
+#             tissue_id = tissue["tissue"]
+#             half_time = tissue["half_time"]
+#             k = math.log(2) / half_time
+#             P_old = tissue_tensions[tissue_id]
+#             # Update using: P(t+dt) = P_A + (P(t) - P_A) * exp(-k * dt)
+#             P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * dt)
+#             tissue_tensions[tissue_id] = P_new
+#
+#     # Now, using the final tissue tensions, compute the allowed additional time (NDL)
+#     current_depth = state["depth"]
+#     ambient_pressure = surface_pressure + (current_depth / 10)
+#     ndl_values = []
+#
+#     for tissue in buhlmann_tissues:
+#         tissue_id = tissue["tissue"]
+#         half_time = tissue["half_time"]
+#         k = math.log(2) / half_time
+#         current_tension = tissue_tensions[tissue_id]
+#         # If Bühlmann coefficients are provided, use them.
+#         a = tissue.get("a")
+#         b = tissue.get("b")
+#         if a is not None and b is not None:
+#             # Maximum allowable tissue tension per Bühlmann:
+#             P_max = (ambient_pressure - a) / b
+#             numerator = ambient_pressure - P_max
+#             denominator = ambient_pressure - current_tension
+#             if denominator <= 0:
+#                 ndl = 0
+#             else:
+#                 try:
+#                     ratio = numerator / denominator
+#                     ndl = -1 / k * math.log(ratio)
+#                 except Exception:
+#                     ndl = 0
+#         else:
+#             # Fallback: use the M-value method.
+#             max_tension = tissue.get("M-value", 1.0) * surface_pressure
+#             numerator = ambient_pressure - max_tension
+#             denominator = ambient_pressure - current_tension
+#             if denominator <= 0:
+#                 ndl = 0
+#             else:
+#                 try:
+#                     ratio = numerator / denominator
+#                     ndl = -1 / k * math.log(ratio)
+#                 except Exception:
+#                     ndl = 0
+#         ndl_values.append(ndl)
+#
+#     # If any tissues are over their limits (negative NDL), sum these values;
+#     # otherwise, use the most restrictive (minimum) positive value.
+#     negatives = [ndl for ndl in ndl_values if ndl < 0]
+#     if negatives:
+#         accumulated_ndl = sum(negatives)
+#     else:
+#         accumulated_ndl = min(ndl_values) if ndl_values else 0
+#
+#     return round(accumulated_ndl, 2)
 def calculate_accumulated_ndl():
     """
-    Calculate the accumulated NDL using the Bühlmann decompression model equations.
+    Calculate the accumulated NDL using either the Bühlmann decompression model equations
+    or the PADI Recreational Dive Planner table, depending on a flag in the state.
 
     For each tissue compartment, the tissue tension is updated using:
-        P(t) = P_A + (P(0) - P_A) * exp(-k*t)
+        P(t+Δt) = P_A + (P(t) - P_A)*exp(-k*Δt)
     where k = ln(2)/half_time and P_A is the ambient pressure at the compartment's depth.
 
     When the tissue compartment includes Bühlmann coefficients (a and b), the maximum allowed
     tissue tension is:
         P_max = (P_A - a) / b
     and the additional time Δt allowed is obtained by solving:
-        P_A - (P_A - P_current) * exp(-k*Δt) = P_max,
+        P_A - (P_A - P_current)*exp(-k*Δt) = P_max,
     which yields:
         Δt = -1/k * ln((P_A - P_max) / (P_A - P_current))
 
     Negative Δt values indicate that the tissue is already over its limit.
-    If a and b are not provided, a simplified approach using an M-value is used.
+    If state["use_padi_ndl"] is True, the PADI table-based residual NDL is returned.
+
+    Finally, if state["use_rgbm_for_ndl"] is True, the resulting NDL is divided by the current rgbm_factor.
     """
-    # Initialize tissue gas tensions for each compartment (starting at 0)
-    tissue_tensions = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
-    surface_pressure = 1.0
-
-    # Process each dive log entry sequentially.
-    for entry in dive_log:
-        # Support both "depth" and "Depth", similarly for time at depth.
-        d = float(entry.get("depth", entry.get("Depth", 0)))
-        t_sec = float(entry.get("time_at_depth", entry.get("Time at Depth", 0)))
-        t_min = t_sec / 60.0  # Convert seconds to minutes
-
-        # Calculate ambient pressure at the segment's depth.
-        pressure_at_depth = surface_pressure + (d / 10)
-        inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) +
-                                                    state.get("helium_fraction", 0.0))
-        # Update each tissue compartment tension using exponential uptake:
-        for tissue in buhlmann_tissues:
-            tissue_id = tissue["tissue"]
-            half_time = tissue["half_time"]
-            k = math.log(2) / half_time
-            P_old = tissue_tensions[tissue_id]
-            # Equation: P(t) = P_A + (P(0) - P_A) * exp(-k*t)
-            P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * t_min)
-            tissue_tensions[tissue_id] = P_new
-
-    # Calculate the additional time (NDL) allowed at the current depth for each tissue.
-    current_depth = state["depth"]
-    ambient_pressure = surface_pressure + (current_depth / 10)
-    ndl_values = []
-    for tissue in buhlmann_tissues:
-        tissue_id = tissue["tissue"]
-        half_time = tissue["half_time"]
-        k = math.log(2) / half_time
-        current_tension = tissue_tensions[tissue_id]
-        # If Bühlmann coefficients are provided, use them.
-        a = tissue.get("a")
-        b = tissue.get("b")
-        if a is not None and b is not None:
-            # Maximum allowable tissue tension according to Bühlmann:
-            P_max = (ambient_pressure - a) / b
-            numerator = ambient_pressure - P_max
-            denominator = ambient_pressure - current_tension
-            if denominator == 0:
-                ndl = 0
-            else:
-                try:
-                    ratio = numerator / denominator
-                    ndl = -1 / k * math.log(ratio)
-                except Exception:
-                    ndl = 0
-        else:
-            # Fallback: use the simplified M-value method.
-            max_tension = tissue.get("M-value", 1.0) * surface_pressure
-            numerator = ambient_pressure - max_tension
-            denominator = ambient_pressure - current_tension
-            if denominator == 0:
-                ndl = 0
-            else:
-                try:
-                    ratio = numerator / denominator
-                    ndl = -1 / k * math.log(ratio)
-                except Exception:
-                    ndl = 0
-        ndl_values.append(ndl)
-
-    # Combine negative NDL values if any exist, otherwise use the smallest positive value.
-    negatives = [ndl for ndl in ndl_values if ndl < 0]
-    if negatives:
-        accumulated_ndl = sum(negatives)
+    # Use the PADI Recreational Dive Planner method if indicated.
+    if state.get("use_padi_ndl", False):
+        ndl_result = padi_ndl_lookup()
     else:
-        accumulated_ndl = min(ndl_values) if ndl_values else 0
-    return round(accumulated_ndl, 2)
+        # Ensure we have some log entries.
+        if not dive_log:
+            ndl_result = 0
+        else:
+            # Initialize tissue gas tensions for each compartment (starting at 0)
+            tissue_tensions = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
+            surface_pressure = 1.0
 
+            # Sort the dive log by cumulative time at depth.
+            sorted_log = sorted(dive_log, key=lambda e: float(e.get("time_at_depth", e.get("Time at Depth", 0))))
+            previous_time = 0.0
+
+            for entry in sorted_log:
+                # Extract current cumulative time (in seconds)
+                current_time = float(entry.get("time_at_depth", entry.get("Time at Depth", 0)))
+                dt = (current_time - previous_time) / 60.0  # convert difference to minutes
+                previous_time = current_time
+                if dt <= 0:
+                    continue  # Skip if no time has elapsed
+
+                # Get the depth for this log entry
+                d = float(entry.get("depth", entry.get("Depth", 0)))
+                # Ambient pressure at this segment (1 atm at surface + 1 atm per 10 m)
+                pressure_at_depth = surface_pressure + (d / 10)
+                inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) +
+                                                          state.get("helium_fraction", 0.0))
+                # Update each tissue compartment using the time increment dt:
+                for tissue in buhlmann_tissues:
+                    tissue_id = tissue["tissue"]
+                    half_time = tissue["half_time"]
+                    k = math.log(2) / half_time
+                    P_old = tissue_tensions[tissue_id]
+                    # Equation: P(t+dt) = P_A + (P(t) - P_A)*exp(-k*dt)
+                    P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * dt)
+                    tissue_tensions[tissue_id] = P_new
+
+            # Now, using the final tissue tensions, compute the allowed additional time (NDL)
+            current_depth = state["depth"]
+            ambient_pressure = surface_pressure + (current_depth / 10)
+            ndl_values = []
+
+            for tissue in buhlmann_tissues:
+                tissue_id = tissue["tissue"]
+                half_time = tissue["half_time"]
+                k = math.log(2) / half_time
+                current_tension = tissue_tensions[tissue_id]
+                # If Bühlmann coefficients are provided, use them.
+                a = tissue.get("a")
+                b = tissue.get("b")
+                if a is not None and b is not None:
+                    # Maximum allowable tissue tension according to Bühlmann:
+                    P_max = (ambient_pressure - a) / b
+                    numerator = ambient_pressure - P_max
+                    denominator = ambient_pressure - current_tension
+                    if denominator <= 0:
+                        ndl = 0
+                    else:
+                        try:
+                            ratio = numerator / denominator
+                            ndl = -1 / k * math.log(ratio)
+                        except Exception:
+                            ndl = 0
+                else:
+                    # Fallback: use the simplified M-value method.
+                    max_tension = tissue.get("M-value", 1.0) * surface_pressure
+                    numerator = ambient_pressure - max_tension
+                    denominator = ambient_pressure - current_tension
+                    if denominator <= 0:
+                        ndl = 0
+                    else:
+                        try:
+                            ratio = numerator / denominator
+                            ndl = -1 / k * math.log(ratio)
+                        except Exception:
+                            ndl = 0
+                ndl_values.append(ndl)
+
+            # Combine negative NDL values if any exist; otherwise, choose the smallest positive value.
+            negatives = [ndl for ndl in ndl_values if ndl < 0]
+            if negatives:
+                ndl_result = sum(negatives)
+            else:
+                ndl_result = min(ndl_values) if ndl_values else 0
+
+    # Integrate RGBM adjustment if enabled.
+    if state.get("use_rgbm_for_ndl", False):
+        rgbm_factor = state.get("rgbm_factor", 1.0)
+        if rgbm_factor > 0:
+            ndl_result = ndl_result * (1 / rgbm_factor)
+
+    return round(ndl_result, 2)
+
+
+@app.route('/toggle-padi-ndl', methods=['POST'])
+def toggle_padi_ndl():
+    data = request.get_json()
+    # Update the global state flag for using PADI table lookup
+    state["use_padi_ndl"] = data.get("use_padi_ndl", False)
+    message = f"PADI tables lookup {'enabled' if state['use_padi_ndl'] else 'disabled'}"
+    print(message)
+    return jsonify({"message": message, "use_padi_ndl": state["use_padi_ndl"]})
 
 def update_time_at_depth():
     """Update dive time and recalc time at depth and RGBM factor."""

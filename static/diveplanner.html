@@ -114,10 +114,10 @@
       </div>
 
       <!-- Dive Log -->
-      <div class="log-container">
-        <h2>Dive Log</h2>
-        <ul id="dive-log"></ul>
-      </div>
+<div class="log-container" style="display: none;">
+  <h2>Dive Log</h2>
+  <ul id="dive-log"></ul>
+</div>
     </div>
 
     <!-- NDL and Graphs Container -->
@@ -158,53 +158,100 @@
     </div>
 
     <!-- Gas Mixture Section -->
-    <div class="yellow-container">
-      <h2>Gas Mixture</h2>
-      <div class="gas-values">
-        <div class="gas-item">
-          <span class="value" id="o2">0.21</span>
-          <span class="label">O₂</span>
+<!-- Gas Mixture Section with Vertical Tabs -->
+<!-- Gas Mixture Section with Horizontal Tabs -->
+<div class="yellow-container">
+  <h2>Equipment</h2>
+  <div class="horizontal-tabs">
+    <!-- Tab Buttons -->
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="openGasTab(event, 'gas-mixtures')">Gas Mixtures</button>
+      <button class="tab-btn" onclick="openGasTab(event, 'gas-stats')">Statistics</button>
+      <button class="tab-btn" onclick="openGasTab(event, 'gas-options')">Options</button>
+    </div>
+    <!-- Tab Panels -->
+    <div class="tab-panels">
+      <!-- Gas Mixtures Panel -->
+      <div id="gas-mixtures" class="tab-panel active">
+        <div class="gas-values">
+          <div class="gas-item">
+            <span class="value" id="o2">0.21</span>
+            <span class="label">O₂</span>
+          </div>
+          <div class="gas-item">
+            <span class="value" id="n2">0.79</span>
+            <span class="label">N₂</span>
+          </div>
+          <div class="gas-item">
+            <span class="value" id="he">0.00</span>
+            <span class="label">He</span>
+          </div>
         </div>
-        <div class="gas-item">
-          <span class="value" id="n2">0.79</span>
-          <span class="label">N₂</span>
-        </div>
-        <div class="gas-item">
-          <span class="value" id="he">0.00</span>
-          <span class="label">He</span>
+        <div class="gas-options">
+          <div class="gas-card selected">
+            <img src="/static/images/air.webp" alt="Air" />
+            <span>Air</span>
+          </div>
+          <div class="gas-card">
+            <img src="/static/images/ean32.webp" alt="EANx32" />
+            <span>EANx32</span>
+          </div>
+          <div class="gas-card">
+            <img src="/static/images/ean36.webp" alt="EANx36" />
+            <span>EANx36</span>
+          </div>
+          <div class="gas-card">
+            <img src="/static/images/ean40.webp" alt="EANx40" />
+            <span>EANx40</span>
+          </div>
+          <div class="gas-card">
+            <img src="/static/images/enriched.webp" alt="Enriched" />
+            <span>Enriched</span>
+          </div>
+          <div class="gas-card">
+            <img src="/static/images/trimix.webp" alt="Trimix" />
+            <span>Trimix</span>
+          </div>
+          <div class="gas-card">
+            <img src="/static/images/rebreather.webp" alt="Rebreather" />
+            <span>Rebreather</span>
+          </div>
         </div>
       </div>
-      <div class="gas-options">
-        <div class="gas-card selected">
-          <img src="/static/images/air.webp" alt="Air" />
-          <span>Air</span>
-        </div>
-        <div class="gas-card">
-          <img src="/static/images/ean32.webp" alt="EANx32" />
-          <span>EANx32</span>
-        </div>
-        <div class="gas-card">
-          <img src="/static/images/ean36.webp" alt="EANx36" />
-          <span>EANx36</span>
-        </div>
-        <div class="gas-card">
-          <img src="/static/images/ean40.webp" alt="EANx40" />
-          <span>EANx40</span>
-        </div>
-        <div class="gas-card">
-          <img src="/static/images/enriched.webp" alt="Enriched" />
-          <span>Enriched</span>
-        </div>
-        <div class="gas-card">
-          <img src="/static/images/trimix.webp" alt="Trimix" />
-          <span>Trimix</span>
-        </div>
-        <div class="gas-card">
-          <img src="/static/images/rebreather.webp" alt="Rebreather" />
-          <span>Rebreather</span>
-        </div>
+      <!-- Statistics Panel (empty for now) -->
+      <div id="gas-stats" class="tab-panel">
+        <p>No statistics available yet.</p>
+      </div>
+      <!-- Options Panel (empty for now) -->
+      <div id="gas-options" class="tab-panel">
+        <p>No options available yet.</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Inline CSS for Horizontal Tabs -->
+<style>
+
+</style>
+
+<!-- JavaScript Function for Horizontal Tabs -->
+<script>
+  function openGasTab(evt, tabName) {
+    var i, tabPanels, tabButtons;
+    tabPanels = document.getElementsByClassName("tab-panel");
+    for (i = 0; i < tabPanels.length; i++) {
+      tabPanels[i].classList.remove("active");
+    }
+    tabButtons = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].classList.remove("active");
+    }
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+  }
+</script>
+
 
     <!-- JavaScript -->
     <script src="/static/js/script.js"></script>

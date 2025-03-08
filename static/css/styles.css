@@ -414,7 +414,7 @@ button:hover {
 
 /* Decompression Table Container */
 #ndl-container {
-  width: 800px;
+  width: 600px;
   margin: 15px 10px;
   padding: 15px 5px;
   background-color: #f8f9fa;
@@ -513,7 +513,7 @@ button:hover {
   padding: 10px;
   border: none;
   cursor: pointer;
-  background: #0056b3;
+  background: linear-gradient(45deg, #6a11cb, #2575fc);
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -522,11 +522,11 @@ button:hover {
 }
 
 .tab-btn.active {
-  background: #ff9800;
+  background: linear-gradient(45deg, #ff7e5f, #feb47b);
 }
 
 .tab-btn:hover {
-  background: #003f7f;
+  background: linear-gradient(45deg, #5d0ea1, #1d6eea);
 }
 
 .tab-content {
@@ -538,6 +538,7 @@ button:hover {
   display: none;
 }
 
+
 #ndl-page {
   display: block;
 }
@@ -547,18 +548,18 @@ button:hover {
   position: fixed;
   top: 15px;
   right: 0;
-  width: 14vw;
-  height: 90vh;
+  width: 16.5vw;
+  height: 92vh;
   background-color: #f8f8f8;
   box-shadow: -5px 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 10px 0 0 10px;
-  padding: 20px;
+  padding: 0px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  z-index: 1;
+  z-index: 0;
 }
 
 .gas-mixture-title {
@@ -577,7 +578,7 @@ button:hover {
 .gas-options {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 5px;
   justify-content: center;
 }
 
@@ -750,45 +751,113 @@ button:hover {
   background-color: #00497a;
   transform: scale(0.98);
 }
+/* Center the toggle button */
+#padi-toggle-btn {
+  display: block;
+  width: 240px;
+  margin: 0 auto 20px auto;
+  padding: 12px;
+  background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-    /* Center the toggle button */
-    #padi-toggle-btn {
-      display: block;
-      width: 240px;
-      margin: 0 auto 20px auto;
-      padding: 12px;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    /* Container for cards */
-    .info-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-    }
-    /* Each card */
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-      padding: 15px;
-      width: 240px;
-      text-align: center;
-    }
-    /* Title label */
-    .card p {
-      margin: 0 0 8px 0;
-      font-weight: bold;
-      font-size: 16px;
-      color: #333;
-    }
-    /* Value text */
-    .card span {
-      font-size: 18px;
-      color: #555;
-    }
+/* Container for cards */
+.info-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* Each card */
+.card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  width: 240px;
+  text-align: center;
+}
+
+/* Title label */
+.card p {
+  margin: 0 0 8px 0;
+  font-weight: bold;
+  font-size: 16px;
+  color: #2d3436;
+}
+
+/* Value text */
+.card span {
+  font-size: 18px;
+  color: #636e72;
+}
+/* Container for standalone tab buttons (optional) */
+/* Container for standalone tab buttons (optional) */
+.tab-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Horizontal Tabs container */
+.horizontal-tabs {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 0px;
+}
+
+/* Horizontal Tabs buttons wrapper */
+.horizontal-tabs .tab-buttons {
+  display: flex;
+  background: #f1f1f1;
+  border-bottom: 1px solid #ddd;
+  gap: 5px;
+  padding: 10px;
+}
+
+/* Base styling for tab buttons (applies in both contexts) */
+.tab-btn {
+  flex: 1;
+  padding: 10px 10px;
+  border: none;
+  cursor: pointer;
+  background: #4e54c8; /* flat blue color */
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  transition: background 0.3s ease, transform 0.3s ease;
+  outline: none;
+}
+
+/* Hover effect for tab buttons */
+.tab-btn:hover {
+  background: #3a3f9e; /* slightly darker blue */
+  transform: scale(1.05);
+}
+
+/* Active state for tab buttons */
+.tab-btn.active {
+  background: #f09819; /* flat orange */
+  transform: scale(1.05);
+}
+
+/* Horizontal Tabs panels */
+.horizontal-tabs .tab-panels {
+  padding: 15px;
+}
+
+.horizontal-tabs .tab-panels .tab-panel {
+  display: none;
+}
+
+.horizontal-tabs .tab-panels .tab-panel.active {
+  display: block;
+}

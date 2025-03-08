@@ -7,7 +7,26 @@ import time
 from collections import defaultdict
 import traceback
 from flasgger import Swagger
+import os
+import signal
+import subprocess
 
+
+def kill_port(port):
+    """Kills any process currently using the given TCP port."""
+    try:
+        # Get the list of process IDs (PIDs) using the port
+        result = subprocess.check_output(["lsof", "-ti", f"tcp:{port}"])
+        pids = result.decode().strip().split("\n")
+        for pid in pids:
+            if pid:  # Avoid empty strings
+                os.kill(int(pid), signal.SIGKILL)
+        print(f"Killed processes on port {port}.")
+    except subprocess.CalledProcessError:
+        print(f"No processes found on port {port}.")
+
+
+# kill_port(5000)
 app = Flask(__name__)
 swagger = Swagger(app)
 
@@ -38,8 +57,37 @@ buhlmann_tissues = [
     {"tissue": 10, "half_time": 146, "M-value": 1.08}
 ]
 
+# Initialize persistent tissue state and last update time
+tissue_state = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
+last_update_time = time.time()
+
 # Global dive log (in-memory) for debugging
 dive_log = []
+
+
+def update_tissue_state():
+    global tissue_state, last_update_time
+
+    current_time = time.time()
+    dt_sec = current_time - last_update_time
+    dt_min = dt_sec / 60.0  # convert seconds to minutes
+    last_update_time = current_time
+
+    # Get current depth from state
+    d = float(state.get("depth", 0))
+    surface_pressure = 1.0
+    # Calculate ambient pressure at current depth (assuming 1 atm per 10 m)
+    pressure_at_depth = surface_pressure + (d / 10)
+    inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) + state.get("helium_fraction", 0.0))
+
+    # Update each tissue compartment based on dt
+    for tissue in buhlmann_tissues:
+        tissue_id = tissue["tissue"]
+        half_time = tissue["half_time"]
+        k = math.log(2) / half_time
+        P_old = tissue_state[tissue_id]
+        P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * dt_min)
+        tissue_state[tissue_id] = P_new
 
 
 def padi_ndl_lookup():
@@ -188,8 +236,12 @@ def save_dive_log(client_uuid, entry):
         json.dump(logs, file, indent=4)
     os.replace(temp_file, log_file)
 
-    print(
-        f"📝 Saved Log Entry: Depth={entry['depth']}m, Time at Depth={entry['time_at_depth']} sec, RGBM={entry['rgbm_factor']:.5f}")
+    # Print all fields in the log entry
+    print("📝 Saved Log Entry:")
+    for key, value in entry.items():
+        print(f"{key}: {value}")
+
+    # Call log_dive with the required fields
     log_dive(entry['depth'], entry['pressure'], entry['oxygen_toxicity'], entry['ndl'],
              entry['rgbm_factor'], entry['total_time'], entry['time_at_depth'])
 
@@ -202,7 +254,7 @@ state = {
     "time_at_depth": 0,
     "depth_start_time": time.time(),
     "depth_durations": defaultdict(float),  # Changed to defaultdict to avoid KeyError
-    "ndl": 60,
+    "ndl": -999,
     "rgbm_factor": 1.0,
     "pressure": 1.0,
     "oxygen_toxicity": 0.21,
@@ -571,6 +623,7 @@ def toggle_padi_ndl():
     print(message)
     return jsonify({"message": message, "use_padi_ndl": state["use_padi_ndl"]})
 
+
 def update_time_at_depth():
     """Update dive time and recalc time at depth and RGBM factor."""
     now = time.time()
@@ -666,6 +719,34 @@ def generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_fac
     return stops
 
 
+def get_current_state():
+    """
+    Returns the current state as a dictionary.
+    This includes all the fields you want to log.
+    """
+    update_time_at_depth()  # Ensure state is up-to-date
+    return {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "depth": int(state["depth"]),
+        "last_depth": int(state["last_depth"]),
+        "time_elapsed": state["time_elapsed"],
+        "total_time": state["time_elapsed"],
+        "time_at_depth": state["time_at_depth"],
+        "depth_start_time": state["depth_start_time"],
+        "depth_durations": dict(state["depth_durations"]),
+        "ndl": calculate_ndl(state["depth"], state["time_at_depth"] / 60),
+        "rgbm_factor": state["rgbm_factor"],
+        "pressure": state["pressure"],
+        "oxygen_toxicity": state["oxygen_toxicity"],
+        "oxygen_fraction": state["oxygen_fraction"],
+        "nitrogen_fraction": state["nitrogen_fraction"],
+        "helium_fraction": state["helium_fraction"],
+        "selected_deco_model": state["selected_deco_model"],
+        "use_rgbm_for_ndl": state["use_rgbm_for_ndl"],
+        "dive_start_time": state["dive_start_time"]
+    }
+
+
 @app.route('/dive', methods=['POST'])
 def dive():
     client_uuid = request.headers.get("Client-UUID")
@@ -673,32 +754,143 @@ def dive():
         return jsonify({"error": "Missing Client-UUID"}), 400
 
     if 0 <= state["depth"] < 350:
-        update_time_at_depth()
-        state["last_depth"] = state["depth"]
-        state["depth"] += 10
-        state["depth_start_time"] = time.time()
-        state["time_at_depth"] = state["depth_durations"][state["depth"]]  # No need for .get() with defaultdict
+        # Capture the complete state (and update time if needed)
+        current_state = get_current_state()
 
-        # Calculate NDL with proper time conversion (seconds to minutes)
-        state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
-        state["pressure"] = round(1 + (state["depth"] / 10), 2)
-        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"],
-                                         2)  # Fixed to use oxygen_fraction
-        state["rgbm_factor"] = calculate_rgbm()
+        # Print all key-value pairs for debugging
+        print("📝 Current State:")
+        for key, value in current_state.items():
+            print(f"{key}: {value}")
 
-        log_entry = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "depth": state["depth"],
-            "pressure": state["pressure"],
-            "oxygen_toxicity": state["oxygen_toxicity"],
-            "ndl": state["ndl"],
-            "rgbm_factor": state["rgbm_factor"],
-            "total_time": round(state["time_elapsed"], 2),
-            "time_at_depth": round(state["time_at_depth"], 2)
-        }
+        # Use the current state as the log entry
+        log_entry = current_state
         save_dive_log(client_uuid, log_entry)
 
+        # Update state for the next depth (if needed)
+        state["last_depth"] = state["depth"]
+        state["depth"] += 10
+        state["pressure"] +=1
+        state["depth_start_time"] = time.time()
+        # Optionally, initialize the new depth in depth_durations
+        state["time_at_depth"] = state["depth_durations"][state["depth"]]
+        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"], 2)
+        state["rgbm_factor"] = calculate_rgbm()
+        print(json.dumps(state, indent=4))
+
     return jsonify(state)
+
+
+# def dive():
+#     client_uuid = request.headers.get("Client-UUID")
+#     if not client_uuid:
+#         return jsonify({"error": "Missing Client-UUID"}), 400
+#
+#     if 0 <= state["depth"] < 350:
+#         # Update time at current depth and capture it
+#         update_time_at_depth()
+#         current_time_at_depth = state["time_at_depth"]
+#
+#         # Build the log entry using the current depth's time_at_depth
+#         log_entry = {
+#             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#             "depth": int(state["depth"]),  # Adjusted depth for logging
+#             "last_depth": int(state["last_depth"]),  # Adjusted last depth for logging
+#             "time_elapsed": state["time_elapsed"],
+#             "total_time": state["time_elapsed"],
+#             "time_at_depth": current_time_at_depth,  # Use the captured value
+#             "depth_start_time": state["depth_start_time"],
+#             "depth_durations": dict(state["depth_durations"]),
+#             "ndl": calculate_ndl(state["depth"], state["time_at_depth"] / 60),
+#             "rgbm_factor": state["rgbm_factor"],
+#             "pressure": state["pressure"],
+#             "oxygen_toxicity": state["oxygen_toxicity"],
+#             "oxygen_fraction": state["oxygen_fraction"],
+#             "nitrogen_fraction": state["nitrogen_fraction"],
+#             "helium_fraction": state["helium_fraction"],
+#             "selected_deco_model": state["selected_deco_model"],
+#             "use_rgbm_for_ndl": state["use_rgbm_for_ndl"],
+#             "dive_start_time": state["dive_start_time"]
+#         }
+#
+#         get_state()
+#
+#         print("📝 Log Entry:")
+#         for key, value in log_entry.items():
+#             print(f"{key}: {value}")
+#
+#         save_dive_log(client_uuid, log_entry)
+#
+#         # Now update for the next depth:
+#         state["last_depth"] = state["depth"]
+#         state["depth"] += 10
+#         state["depth_start_time"] = time.time()
+#         # Optionally, reset time_at_depth for the new depth if needed:
+#         state["time_at_depth"] = state["depth_durations"][state["depth"]]
+#
+#     return jsonify(state)
+
+# def dive():
+#     client_uuid = request.headers.get("Client-UUID")
+#     if not client_uuid:
+#         return jsonify({"error": "Missing Client-UUID"}), 400
+#
+#     if 0 <= state["depth"] < 350:
+#         # Update the time at the current depth
+#         update_time_at_depth()
+#
+#         # Save the current depth as last_depth before modifying
+#         state["last_depth"] = state["depth"]
+#
+#         # Increase depth and reset depth start time for the new depth
+#         state["depth"] += 10
+#         state["depth_start_time"] = time.time()
+#
+#         # Capture the time_at_depth from the new depth (if already present)
+#         state["time_at_depth"] = state["depth_durations"][state["depth"]]
+#
+#         # Calculate NDL (using time conversion from seconds to minutes)
+#         state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
+#         state["pressure"] = round(1 + (state["depth"] / 10), 2)
+#         state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"], 2)
+#         state["rgbm_factor"] = calculate_rgbm()
+#
+#         # Build the log entry.
+#         # For display purposes, subtract 10 from depth values (converted to int)
+#         log_entry = {
+#             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#             "depth": int(state["depth"]) - 10,  # Adjusted depth for logging
+#             "last_depth": int(state["last_depth"]) - 10,  # Adjusted last depth for logging
+#             "time_elapsed": state["time_elapsed"],
+#             "total_time": state["time_elapsed"],  # Total dive time
+#             "time_at_depth": state["time_at_depth"],
+#             "depth_start_time": state["depth_start_time"],
+#             "depth_durations": dict(state["depth_durations"]),
+#             "ndl": state["ndl"],
+#             "rgbm_factor": state["rgbm_factor"],
+#             "pressure": state["pressure"],
+#             "oxygen_toxicity": state["oxygen_toxicity"],
+#             "oxygen_fraction": state["oxygen_fraction"],
+#             "nitrogen_fraction": state["nitrogen_fraction"],
+#             "helium_fraction": state["helium_fraction"],
+#             "selected_deco_model": state["selected_deco_model"],
+#             "use_rgbm_for_ndl": state["use_rgbm_for_ndl"],
+#             "dive_start_time": state["dive_start_time"]
+#         }
+#
+#         # Print all fields in the log entry
+#         print("📝 Saved Log Entry:")
+#         for key, value in log_entry.items():
+#             print(f"{key}: {value}")
+#
+#         # Save the log entry to file
+#         save_dive_log(client_uuid, log_entry)
+#
+#         # Prepare for the next depth: update last_depth and increase depth
+#         state["last_depth"] = state["depth"]
+#         state["depth"] += 10
+#         state["depth_start_time"] = time.time()
+#
+#     return jsonify(state)
 
 
 @app.route('/ascend', methods=['POST'])
@@ -833,6 +1025,73 @@ def toggle_rgbm_ndl():
     return jsonify({"message": f"RGBM-based NDL calculation {'enabled' if state['use_rgbm_for_ndl'] else 'disabled'}"})
 
 
+# Global variable for smoothed NDL (initialize to a high value)
+smoothed_ndl = 200
+
+
+def compute_ndl():
+    global smoothed_ndl
+
+    surface_pressure = 1.0
+    current_depth = state.get("depth", 0)
+    ambient_pressure = surface_pressure + (current_depth / 10)
+    ndl_values = []
+
+    for tissue in buhlmann_tissues:
+        tissue_id = tissue["tissue"]
+        half_time = tissue["half_time"]
+        k = math.log(2) / half_time
+        current_tension = tissue_state[tissue_id]
+
+        # Use Bühlmann coefficients if available, otherwise use the M-value.
+        a = tissue.get("a")
+        b = tissue.get("b")
+        if a is not None and b is not None:
+            P_max = (ambient_pressure - a) / b
+            numerator = ambient_pressure - P_max
+            denominator = ambient_pressure - current_tension
+            if denominator <= 0:
+                ndl = 0
+            else:
+                try:
+                    ratio = numerator / denominator
+                    ndl = -1 / k * math.log(ratio)
+                except Exception:
+                    ndl = 0
+        else:
+            max_tension = tissue.get("M-value", 1.0) * surface_pressure
+            numerator = ambient_pressure - max_tension
+            denominator = ambient_pressure - current_tension
+            if denominator <= 0:
+                ndl = 0
+            else:
+                try:
+                    ratio = numerator / denominator
+                    ndl = -1 / k * math.log(ratio)
+                except Exception:
+                    ndl = 0
+        ndl_values.append(ndl)
+
+    # Combine negative values if present, otherwise choose the minimum positive value
+    negatives = [ndl for ndl in ndl_values if ndl < 0]
+    if negatives:
+        accumulated_ndl = sum(negatives)
+    else:
+        accumulated_ndl = min(ndl_values) if ndl_values else 0
+
+    # Apply RGBM adjustment if enabled
+    if state.get("use_rgbm_for_ndl", False):
+        rgbm_factor = state.get("rgbm_factor", 1.0)
+        if rgbm_factor > 0:
+            accumulated_ndl *= (1 / rgbm_factor)
+
+    # Smooth the NDL output using exponential smoothing.
+    alpha = 0.1  # smoothing factor: smaller values yield smoother, slower updates.
+    smoothed_ndl = smoothed_ndl + alpha * (accumulated_ndl - smoothed_ndl)
+
+    return round(smoothed_ndl, 2)
+
+
 def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_fraction=0.79, helium_fraction=0.0):
     """Calculate NDL using an adapted Bühlmann ZH-L16 model.
        time_at_depth_minutes is expected in minutes.
@@ -924,7 +1183,7 @@ def reset():
         "time_at_depth": 0,
         "depth_start_time": time.time(),
         "depth_durations": defaultdict(float),  # Use defaultdict to avoid KeyErrors
-        "ndl": 60,
+        "ndl": -999,
         "rgbm_factor": 1.0,
         "pressure": 1.0,
         "oxygen_toxicity": 0.21,
@@ -1020,8 +1279,22 @@ def update_gas_mix():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
+import threading
+
+
+def background_state_update():
+    while True:
+        update_tissue_state()
+        # Optionally update other state values...
+        time.sleep(1)  # Update every second
+
+
 if __name__ == '__main__':
+    # Kill any process on port 5000 before starting the server.
+
     # Uncomment the following lines to run background updates if needed:
     # threading.Thread(target=auto_update_rgbm, daemon=True).start()
     # threading.Thread(target=auto_update_state, daemon=True).start()
+    threading.Thread(target=background_state_update, daemon=True).start()
+
     app.run(debug=True)

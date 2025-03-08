@@ -730,3 +730,65 @@ button:hover {
     font-family: Arial, sans-serif; /* Use a clean font */
 }
 
+#padi-toggle-btn {
+  background-color: #0077cc; /* Blue background */
+  color: #fff;              /* White text */
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#padi-toggle-btn:hover {
+  background-color: #005fa3;
+  transform: scale(1.05);
+}
+
+#padi-toggle-btn:active {
+  background-color: #00497a;
+  transform: scale(0.98);
+}
+
+    /* Center the toggle button */
+    #padi-toggle-btn {
+      display: block;
+      width: 240px;
+      margin: 0 auto 20px auto;
+      padding: 12px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    /* Container for cards */
+    .info-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    /* Each card */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      padding: 15px;
+      width: 240px;
+      text-align: center;
+    }
+    /* Title label */
+    .card p {
+      margin: 0 0 8px 0;
+      font-weight: bold;
+      font-size: 16px;
+      color: #333;
+    }
+    /* Value text */
+    .card span {
+      font-size: 18px;
+      color: #555;
+    }

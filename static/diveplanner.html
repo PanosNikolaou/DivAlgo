@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diver Pressure Simulation</title>
-  <link rel="icon" type="image/png" href="/static/images/da.ico">
+  <link rel="icon" type="image/png" href="/static/images/da.ico" />
 
   <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
 
   <!-- Custom Styles -->
-  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
 <body>
   <div class="container">
@@ -22,13 +25,21 @@
       <div class="ocean-container">
         <h1 class="title">
           <span class="logo-container">
-            <img src="/static/images/da-transp.png" alt="Logo" class="logo">
+            <img src="/static/images/da-transp.png" alt="Logo" class="logo" />
           </span>
           DivAlgo - A Diving Decompression Algorithmic Simulator
         </h1>
-        <h3 id="warning-message">WARNING: This software is experimental and should not be relied upon for actual dives.</h3>
+        <h3 id="warning-message">
+          WARNING: This software is experimental and should not be relied upon for
+          actual dives.
+        </h3>
         <div class="ocean">
-          <img src="/static/images/diver.png" alt="Diver with Tank and Suit" class="diver" id="diver">
+          <img
+            src="/static/images/diver.png"
+            alt="Diver with Tank and Suit"
+            class="diver"
+            id="diver"
+          />
         </div>
       </div>
 
@@ -36,19 +47,39 @@
       <div class="info-button-wrapper">
         <!-- Info Container -->
         <div class="info-container">
-          <button id="padi-toggle-btn">Enable PADI Tables Lookup</button>
-          <div class="info"><p>Depth:</p> <span id="depth">0</span> m</div>
-          <div class="info"><p>Pressure:</p> <span id="pressure">1.00</span> atm</div>
-          <div class="info"><p>NDL:</p> <span id="ndl">60.00</span> min</div>
-          <!-- Removed duplicate NDL element. If you intended to show a separate value, rename the label and/or id -->
-          <div class="info">
+          <div class="card">
+            <p>Depth:</p>
+            <span id="depth">0</span> m
+          </div>
+          <div class="card">
+            <p>Pressure:</p>
+            <span id="pressure">1.00</span> atm
+          </div>
+          <div class="card">
+            <p>NDL:</p>
+            <span id="ndl">60.00</span> min
+            <button id="padi-toggle-btn">Enable PADI Tables Lookup</button>
+          </div>
+          <div class="card">
             <p>Oxygen Toxicity:</p>
             <span id="toxicity">0.21</span> PO₂
-            <button id="info-btn" class="info-button" disabled hidden>ℹ️</button>
+            <p id="toxicity-label"></p>
+            <span>
+              <button id="info-btn" class="info-button">Oxygen Toxicity Table ℹ️</button>
+            </span>
           </div>
-          <div class="info"><p>RGBM Factor:</p> <span id="rgbm">1.00</span></div>
-          <div class="info"><p>Time Elapsed:</p> <span id="time">33</span> sec</div>
-          <div class="info"><p>Time at Depth:</p> <span id="depth-time">33</span> sec</div>
+          <div class="card">
+            <p>RGBM Factor:</p>
+            <span id="rgbm">1.00</span>
+          </div>
+          <div class="card">
+            <p>Time Elapsed:</p>
+            <span id="time">33</span> sec
+          </div>
+          <div class="card">
+            <p>Time at Depth:</p>
+            <span id="depth-time">33</span> sec
+          </div>
         </div>
 
         <!-- Button & Decompression Model Selection -->
@@ -56,12 +87,19 @@
           <button id="dive-btn">Dive Deeper</button>
           <button id="ascend-btn">Dive Up</button>
           <button id="reset-btn">Reset</button>
-      <div class="rgbm-options" id="rgbm-options" style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
-        <input type="checkbox" id="rgbm-checkbox">
-        <label for="rgbm-checkbox" style="font-size: 14px; font-weight: 500; cursor: pointer;">
-          Integrate RGBM in NDL
-        </label>
-      </div>
+          <div
+            class="rgbm-options"
+            id="rgbm-options"
+            style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
+          >
+            <input type="checkbox" id="rgbm-checkbox" />
+            <label
+              for="rgbm-checkbox"
+              style="font-size: 14px; font-weight: 500; cursor: pointer;"
+            >
+              Integrate RGBM in NDL
+            </label>
+          </div>
           <div class="ndl-placeholder">
             <label for="deco-model">Decompression Model:</label>
             <select id="deco-model">
@@ -85,7 +123,9 @@
     <!-- NDL and Graphs Container -->
     <div id="ndl-container">
       <div class="tab-container">
-        <button class="tab-btn active" onclick="openTab(event, 'ndl-page')">NDL Table</button>
+        <button class="tab-btn active" onclick="openTab(event, 'ndl-page')">
+          NDL Table
+        </button>
         <button class="tab-btn" onclick="openTab(event, 'graph-page')">Graphs</button>
       </div>
       <div id="dynamic-pages">
@@ -120,29 +160,50 @@
     <!-- Gas Mixture Section -->
     <div class="yellow-container">
       <h2>Gas Mixture</h2>
-    <div class="gas-values">
-      <div class="gas-item">
-        <span class="value" id="o2">0.21</span>
-        <span class="label">O₂</span>
+      <div class="gas-values">
+        <div class="gas-item">
+          <span class="value" id="o2">0.21</span>
+          <span class="label">O₂</span>
+        </div>
+        <div class="gas-item">
+          <span class="value" id="n2">0.79</span>
+          <span class="label">N₂</span>
+        </div>
+        <div class="gas-item">
+          <span class="value" id="he">0.00</span>
+          <span class="label">He</span>
+        </div>
       </div>
-      <div class="gas-item">
-        <span class="value" id="n2">0.79</span>
-        <span class="label">N₂</span>
+      <div class="gas-options">
+        <div class="gas-card selected">
+          <img src="/static/images/air.webp" alt="Air" />
+          <span>Air</span>
+        </div>
+        <div class="gas-card">
+          <img src="/static/images/ean32.webp" alt="EANx32" />
+          <span>EANx32</span>
+        </div>
+        <div class="gas-card">
+          <img src="/static/images/ean36.webp" alt="EANx36" />
+          <span>EANx36</span>
+        </div>
+        <div class="gas-card">
+          <img src="/static/images/ean40.webp" alt="EANx40" />
+          <span>EANx40</span>
+        </div>
+        <div class="gas-card">
+          <img src="/static/images/enriched.webp" alt="Enriched" />
+          <span>Enriched</span>
+        </div>
+        <div class="gas-card">
+          <img src="/static/images/trimix.webp" alt="Trimix" />
+          <span>Trimix</span>
+        </div>
+        <div class="gas-card">
+          <img src="/static/images/rebreather.webp" alt="Rebreather" />
+          <span>Rebreather</span>
+        </div>
       </div>
-      <div class="gas-item">
-        <span class="value" id="he">0.00</span>
-        <span class="label">He</span>
-      </div>
-    </div>
-    <div class="gas-options">
-      <div class="gas-card selected"><img src="/static/images/air.webp" alt="Air"><span>Air</span></div>
-      <div class="gas-card"><img src="/static/images/ean32.webp" alt="EANx32"><span>EANx32</span></div>
-      <div class="gas-card"><img src="/static/images/ean36.webp" alt="EANx36"><span>EANx36</span></div>
-      <div class="gas-card"><img src="/static/images/ean40.webp" alt="EANx40"><span>EANx40</span></div>
-      <div class="gas-card"><img src="/static/images/enriched.webp" alt="Enriched"><span>Enriched</span></div>
-      <div class="gas-card"><img src="/static/images/trimix.webp" alt="Trimix"><span>Trimix</span></div>
-      <div class="gas-card"><img src="/static/images/rebreather.webp" alt="Rebreather"><span>Rebreather</span></div>
-    </div>
     </div>
 
     <!-- JavaScript -->

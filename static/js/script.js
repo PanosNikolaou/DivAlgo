@@ -69,7 +69,9 @@ async function dive() {
     const data = await response.json();
     console.log("Diving:", data);
     updateDiverDisplay(data);
+    state["time_at_depth"] = document.getElementById("depth-time");
     logDiveData(data);
+//    document.getElementById("depth-time");
   } catch (error) {
     console.error("Error diving:", error);
   }
@@ -141,6 +143,29 @@ function updateDiverDisplay(data) {
     }
   }
 
+  // --- Update toxicity label based on oxygen toxicity value ---
+  const toxicityVal = data.oxygen_toxicity;
+  let toxicityLabel = "";
+
+  // Define thresholds for toxicity labels
+  if (toxicityVal <= 0.21) {
+    toxicityLabel = "Safe";
+  } else if (toxicityVal <= 0.42) {
+    toxicityLabel = "Moderate (CNS risk)";
+  } else if (toxicityVal <= 0.63) {
+    toxicityLabel = "Severe (Convulsions likely)";
+  } else if (toxicityVal <= 1.05) {
+    toxicityLabel = "High (Extreme CNS risk)";
+  } else {
+    toxicityLabel = "Fatal (Beyond safe limits)";
+  }
+
+  const toxicityLabelEl = document.getElementById("toxicity-label");
+  if (toxicityLabelEl) {
+    toxicityLabelEl.innerText = toxicityLabel;
+  }
+  // -----------------------------------------------------------
+
   // Reset the depth timer if the depth has changed
   if (data.depth !== previousDepth) {
     depthStartTime = Date.now();
@@ -156,12 +181,52 @@ function updateDiverDisplay(data) {
   }
 }
 
+  function updateToxicityLabel() {
+    // Get the toxicity value from the element (make sure it's a number)
+    var toxicityVal = parseFloat(document.getElementById("toxicity").innerText);
+    var label = "";
+
+    // Define your thresholds (you can adjust these values as needed)
+    if (toxicityVal <= 0.21) {
+      label = "Safe";
+    } else if (toxicityVal <= 0.42) {
+      label = "Moderate (CNS risk)";
+    } else if (toxicityVal <= 0.63) {
+      label = "Severe (Convulsions likely)";
+    } else if (toxicityVal <= 1.05) {
+      label = "High (Extreme CNS risk)";
+    } else {
+      label = "Fatal (Beyond safe limits)";
+    }
+
+    // Update the toxicity-label element with the calculated label
+    document.getElementById("toxicity-label").innerText = label;
+  }
+
+  // Call the function on page load or whenever the toxicity value updates
+  window.onload = updateToxicityLabel;
+
 function logDiveData(data) {
-  const logList = document.getElementById("dive-log");
-  const logEntry = document.createElement("li");
-  logEntry.textContent = `Depth: ${data.depth} m | Pressure: ${data.pressure.toFixed(2)} atm | Oxygen Toxicity: ${data.oxygen_toxicity.toFixed(2)} PO₂ | NDL: ${data.ndl.toFixed(2)} min | RGBM Factor: ${data.rgbm_factor.toFixed(2)} | Time Elapsed: ${document.getElementById("time").innerText} | Time at Depth: ${document.getElementById("depth-time").innerText}`;
-  if (logList) logList.appendChild(logEntry);
-  fetchStateAndUpdate();
+      const logList = document.getElementById("dive-log");
+      const logEntry = document.createElement("li");
+    logEntry.textContent = `Depth: ${(parseInt(data.depth, 10) - 10)} m
+    | Last Depth: ${data.last_depth} m
+    | Time Elapsed: ${data.time_elapsed}
+    | Time at Depth: ${data.time_at_depth}
+    | Depth Start Time: ${data.depth_start_time}
+    | Depth Durations: ${JSON.stringify(data.depth_durations)}
+    | NDL: ${data.ndl.toFixed(2)} min
+    | RGBM Factor: ${data.rgbm_factor.toFixed(2)}
+    | Pressure: ${data.pressure.toFixed(2)} atm
+    | Oxygen Toxicity: ${data.oxygen_toxicity.toFixed(2)} PO₂
+    | Oxygen Fraction: ${data.oxygen_fraction}
+    | Nitrogen Fraction: ${data.nitrogen_fraction}
+    | Helium Fraction: ${data.helium_fraction}
+    | Selected Deco Model: ${data.selected_deco_model}
+    | Use RGBM for NDL: ${data.use_rgbm_for_ndl}
+    | Dive Start Time: ${data.dive_start_time}`;
+      if (logList) logList.appendChild(logEntry);
+      fetchStateAndUpdate();
 }
 
 function resetSimulation() {
@@ -300,18 +365,6 @@ function toggleRGBM() {
     })
     .catch(error => console.error("Error:", error));
 }
-
-// Call this function when the page loads
-//window.onload = function () {
-//    fetchStateAndEnableRGBM();
-//    document.getElementById("rgbm-checkbox").addEventListener("change", toggleRGBM);
-//};
-//
-//
-//// Call this function when the page loads
-//window.onload = function () {
-//    fetchStateAndEnableRGBM();
-//};
 
 
 // Call this function when the page loads
@@ -461,8 +514,8 @@ function fetchNDL() {
             console.warn("❌ Element with ID 'rgbm' not found.");
           }
 
-          if (document.getElementById("oxygen_toxicity")) {
-            document.getElementById("oxygen_toxicity").textContent = state.oxygen_toxicity?.toFixed(2) ?? "N/A";
+          if (document.getElementById("toxicity")) {
+            document.getElementById("toxicity").textContent = state.oxygen_toxicity?.toFixed(2) ?? "N/A";
           } else {
             console.warn("❌ Element with ID 'oxygen_toxicity' not found.");
           }

@@ -59,6 +59,19 @@
                     <p>NDL:</p>
                     <span id="ndl">60.00</span> min
                     <button id="padi-toggle-btn">Enable PADI Tables Lookup</button>
+                    <div
+                            class="rgbm-options"
+                            id="rgbm-options"
+                            style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
+                    >
+                        <input type="checkbox" id="rgbm-checkbox"/>
+                        <label
+                                for="rgbm-checkbox"
+                                style="font-size: 14px; font-weight: 500; cursor: pointer;"
+                        >
+                            Integrate RGBM in NDL
+                        </label>
+                    </div>
                 </div>
                 <div class="card">
                     <p>Oxygen Toxicity:</p>
@@ -87,19 +100,6 @@
                 <button id="dive-btn">Dive Deeper</button>
                 <button id="ascend-btn">Dive Up</button>
                 <button id="reset-btn">Reset</button>
-                <div
-                        class="rgbm-options"
-                        id="rgbm-options"
-                        style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
-                >
-                    <input type="checkbox" id="rgbm-checkbox"/>
-                    <label
-                            for="rgbm-checkbox"
-                            style="font-size: 14px; font-weight: 500; cursor: pointer;"
-                    >
-                        Integrate RGBM in NDL
-                    </label>
-                </div>
                 <div class="ndl-placeholder">
                     <label for="deco-model">Decompression Model:</label>
                     <select id="deco-model">
@@ -167,7 +167,7 @@
             <div class="tab-buttons">
                 <button class="tab-btn active" onclick="openGasTab(event, 'gas-mixtures')">Gas Mixtures</button>
                 <button class="tab-btn" onclick="openGasTab(event, 'diver-physiology')">Diver Physiology</button>
-                <button class="tab-btn" onclick="openGasTab(event, 'sd-aqi')">SD-AQI</button>
+                <button class="tab-btn" onclick="openGasTab(event, 'sd-aqi')">Air Quality</button>
             </div>
             <!-- Tab Panels -->
             <div class="tab-panels">
@@ -254,32 +254,40 @@
                     </div>
                 </div>
 
-<!-- Options Panel -->
-<div id="sd-aqi" class="tab-panel">
-  <h3>Options Panel</h3>
-  <div class="options-section">
-    <h4>Air Quality</h4>
-    <div class="option-group">
-      <label for="air-quality-index">Air Quality Index:</label>
-      <input type="number" id="air-quality-index" name="air_quality_index" step="1" placeholder="Enter AQI">
-    </div>
-    <div class="option-group">
-      <label for="sd-air-quality-index">SD Air Quality Index:</label>
-      <input type="number" id="sd-air-quality-index" name="sd_air_quality_index" step="1" placeholder="Enter SD AQI">
-    </div>
-  </div>
-  <div class="options-section">
-    <h4>Air Filling</h4>
-    <div class="option-group">
-      <label for="compressor">Compressor:</label>
-      <input type="text" id="compressor" name="compressor" placeholder="Enter compressor details">
-    </div>
-    <div class="option-group">
-      <label for="oil">Oil:</label>
-      <input type="text" id="oil" name="oil" placeholder="Enter oil details">
-    </div>
-  </div>
-</div>
+                <!-- Options Panel -->
+                <div id="sd-aqi" class="tab-panel">
+                    <h3>Options Panel</h3>
+                    <div class="options-section">
+                        <h4>Air Quality</h4>
+                        <div class="option-group">
+                            <label for="air-quality-index">Air Quality Index:</label>
+                            <input type="number" id="air-quality-index" name="air_quality_index" step="1"
+                                   placeholder="Enter AQI">
+                        </div>
+                        <div class="option-group">
+                            <label for="sd-air-quality-index">SD Air Quality Index:</label>
+                            <input type="number" id="sd-air-quality-index" name="sd_air_quality_index" step="1"
+                                   placeholder="Enter SD AQI">
+                        </div>
+                    </div>
+                    <div class="options-section">
+                        <h4>Air Filling</h4>
+                        <div class="option-group">
+                            <label for="compressor">Compressor:</label>
+                            <input type="text" id="compressor" name="compressor" placeholder="Enter compressor details">
+                        </div>
+                        <div class="option-group">
+                            <label for="oil">Oil:</label>
+                            <input type="text" id="oil" name="oil" placeholder="Enter oil details">
+                        </div>
+                        <div class="option-group">
+                            <label for="air-pressure">Air Pressure in Tank:</label>
+                            <input type="number" id="air-pressure" name="air_pressure" step="0.1"
+                                   placeholder="Enter air pressure in tank">
+                        </div>
+                    </div>
+                    <button type="button" id="save-options">Save</button>
+                </div>
 
             </div>
         </div>

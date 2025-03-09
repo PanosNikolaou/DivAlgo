@@ -27,7 +27,7 @@ def kill_port(port):
         print(f"No processes found on port {port}.")
 
 
-#kill_port(5000)
+# kill_port(5000)
 app = Flask(__name__)
 swagger = Swagger(app)
 
@@ -770,7 +770,7 @@ def dive():
         # Update state for the next depth (if needed)
         state["last_depth"] = state["depth"]
         state["depth"] += 10
-        state["pressure"] +=1
+        state["pressure"] += 1
         state["depth_start_time"] = time.time()
         # Optionally, initialize the new depth in depth_durations
         state["time_at_depth"] = state["depth_durations"][state["depth"]]
@@ -1280,8 +1280,6 @@ def update_gas_mix():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
-
-
 def background_state_update():
     while True:
         update_tissue_state()
@@ -1291,6 +1289,7 @@ def background_state_update():
 
 # In-memory store for demonstration purposes
 physiology_store = {}
+
 
 @app.route('/update_physiology', methods=['POST'])
 def update_physiology():
@@ -1317,6 +1316,7 @@ def update_physiology():
         "data": data
     }
     return jsonify(response_data), 200
+
 
 if __name__ == '__main__':
     # Kill any process on port 5000 before starting the server.

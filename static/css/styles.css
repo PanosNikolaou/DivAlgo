@@ -240,14 +240,14 @@ img {
 /* Wrapper for Info Panel & Buttons */
 .info-button-wrapper {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     align-items: flex-start;
     width: 100%;
     max-width: 900px;
     gap: 30px;
     padding: 5px 0;
     flex-wrap: wrap;
-    align-content: stretch;
+    align-content: center;
     flex-direction: row;
 }
 
@@ -903,4 +903,165 @@ button:hover {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+}
+
+/* Diver Physiology Panel styling */
+#diver-physiology {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+#diver-physiology h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Form styling: stack each form group vertically with consistent spacing */
+#physiology-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Each form group (label and input) */
+#physiology-form div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Label styling */
+#physiology-form label {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 5px;
+  transition: color 0.3s ease, font-weight 0.3s ease;
+}
+
+/* Label hover effect */
+#physiology-form label:hover {
+  color: #007bff;
+}
+
+/* Input styling */
+#physiology-form input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+/* Input focus effect */
+#physiology-form input[type="number"]:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Button styling */
+#physiology-form button {
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#physiology-form button:hover {
+  background-color: #0056b3;
+}
+
+/* Output styling for results/messages */
+#physiology-output {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Options Panel Container */
+#sd-aqi.tab-panel {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* Panel Header */
+#sd-aqi h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Options Sections */
+.options-section {
+  margin-bottom: 20px;
+}
+
+/* Section Titles */
+.options-section h4 {
+  font-size: 18px;
+  color: #007bff;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #007bff;
+  padding-bottom: 5px;
+  text-align: left;
+}
+
+/* Option Group Styling */
+.option-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.option-group label {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.option-group input {
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Save Button */
+#save-options {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+#save-options:hover {
+  background-color: #0056b3;
 }

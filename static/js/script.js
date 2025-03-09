@@ -795,6 +795,65 @@ document.getElementById("physiology-form").addEventListener("submit", function (
   getPhysiologyData();
 });
 
+    document.addEventListener("DOMContentLoaded", function () {
+      const loginModal = document.getElementById("auth-login-modal");
+      const registerModal = document.getElementById("auth-register-modal");
+      const mainContent = document.getElementById("main-content");
+
+      // Check if the user is already logged in (using localStorage)
+      if (!localStorage.getItem("loggedIn")) {
+        loginModal.style.display = "flex";
+      } else {
+        loginModal.style.display = "none";
+        mainContent.style.display = "block";
+      }
+
+      // Login form submission
+      document.getElementById("auth-login-form").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const username = document.getElementById("auth-login-username").value.trim();
+        const password = document.getElementById("auth-login-password").value.trim();
+
+        // Demo authentication (replace with actual API call)
+        if (username === "diver" && password === "password123") {
+          localStorage.setItem("loggedIn", true);
+          loginModal.style.display = "none";
+          mainContent.style.display = "block";
+        } else {
+          document.getElementById("auth-login-error").innerText = "Invalid username or password.";
+        }
+      });
+
+      // Show register modal when clicking register link
+      document.getElementById("auth-show-register").addEventListener("click", function() {
+        loginModal.style.display = "none";
+        registerModal.style.display = "flex";
+      });
+
+      // Back to login link in register modal
+      document.getElementById("auth-back-to-login").addEventListener("click", function() {
+        registerModal.style.display = "none";
+        loginModal.style.display = "flex";
+      });
+
+      // Register form submission
+      document.getElementById("auth-register-form").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const username = document.getElementById("auth-reg-username").value.trim();
+        const email = document.getElementById("auth-reg-email").value.trim();
+        const password = document.getElementById("auth-reg-password").value.trim();
+
+        // Demo registration (replace with your API call)
+        if (username && email && password) {
+          localStorage.setItem("loggedIn", true);
+          registerModal.style.display = "none";
+          mainContent.style.display = "block";
+        } else {
+          document.getElementById("auth-register-error").innerText = "Please fill all fields.";
+        }
+      });
+    });
+
 
 // ----- Button Click Handlers -----
 document.getElementById("dive-btn").onclick = dive;

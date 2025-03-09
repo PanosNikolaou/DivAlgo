@@ -19,6 +19,58 @@
     <link rel="stylesheet" href="/static/css/styles.css"/>
 </head>
 <body>
+<!-- Login Modal -->
+<!-- Login Modal -->
+<div id="auth-login-modal" class="modal">
+    <div class="auth-modal-content">
+        <h2>Log In</h2>
+        <form id="auth-login-form">
+            <div class="auth-form-group">
+                <label for="auth-login-username">Username:</label>
+                <input type="text" id="auth-login-username" name="username" required/>
+            </div>
+            <div class="auth-form-group">
+                <label for="auth-login-password">Password:</label>
+                <input type="password" id="auth-login-password" name="password" required/>
+            </div>
+            <div class="auth-error-message" id="auth-login-error"></div>
+            <button type="submit" class="auth-button">Log In</button>
+        </form>
+        <div class="auth-modal-link" id="auth-show-register">Not registered? Register here</div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div id="auth-register-modal" class="modal">
+    <div class="auth-modal-content">
+        <h2>Register</h2>
+        <form id="auth-register-form">
+            <div class="auth-form-group">
+                <label for="auth-reg-username">Username:</label>
+                <input type="text" id="auth-reg-username" name="username" required/>
+            </div>
+            <div class="auth-form-group">
+                <label for="auth-reg-email">Email:</label>
+                <input type="email" id="auth-reg-email" name="email" required/>
+            </div>
+            <div class="auth-form-group">
+                <label for="auth-reg-password">Password:</label>
+                <input type="password" id="auth-reg-password" name="password" required/>
+            </div>
+            <div class="auth-error-message" id="auth-register-error"></div>
+            <button type="submit" class="auth-button">Register</button>
+        </form>
+        <div class="auth-modal-link" id="auth-back-to-login">Already registered? Log In here</div>
+    </div>
+</div>
+
+<!-- Main Content (Hidden until login) -->
+<!--  <div id="main-content" style="display: none;">-->
+<!--    &lt;!&ndash; Your main page content goes here &ndash;&gt;-->
+<!--    <h1>Welcome to Diver Pressure Simulation</h1>-->
+<!--    <p>This is your main page content.</p>-->
+<!--  </div>-->
+
 <div class="container">
     <!-- Left Section -->
     <div class="left-section">
@@ -30,8 +82,10 @@
                 DivAlgo - A Diving Decompression Algorithmic Simulator
             </h1>
             <h3 id="warning-message">
-                WARNING: This software is experimental and should not be relied upon for
-                actual dives.
+                Caution: This software is experimental and intended solely for educational and learning purposes. It
+                should not be used for actual dive operations.
+
+
             </h3>
             <div class="ocean">
                 <img
@@ -58,20 +112,6 @@
                 <div class="card">
                     <p>NDL:</p>
                     <span id="ndl">60.00</span> min
-                    <button id="padi-toggle-btn">Enable PADI Tables Lookup</button>
-                    <div
-                            class="rgbm-options"
-                            id="rgbm-options"
-                            style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
-                    >
-                        <input type="checkbox" id="rgbm-checkbox"/>
-                        <label
-                                for="rgbm-checkbox"
-                                style="font-size: 14px; font-weight: 500; cursor: pointer;"
-                        >
-                            Integrate RGBM in NDL
-                        </label>
-                    </div>
                 </div>
                 <div class="card">
                     <p>Oxygen Toxicity:</p>
@@ -162,6 +202,20 @@
     <!-- Gas Mixture Section with Horizontal Tabs -->
     <div class="yellow-container">
         <h2>Diving Parameters</h2>
+                            <button id="padi-toggle-btn">Enable RDP Tables Lookup</button>
+                    <div
+                            class="rgbm-options"
+                            id="rgbm-options"
+                            style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
+                    >
+                        <input type="checkbox" id="rgbm-checkbox"/>
+                        <label
+                                for="rgbm-checkbox"
+                                style="font-size: 14px; font-weight: 500; cursor: pointer;"
+                        >
+                            Integrate RGBM in NDL
+                        </label>
+                    </div>
         <div class="horizontal-tabs">
             <!-- Tab Buttons -->
             <div class="tab-buttons">

@@ -733,6 +733,68 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+function openGasTab(evt, tabName) {
+    var i, tabPanels, tabButtons;
+    tabPanels = document.getElementsByClassName("tab-panel");
+    for (i = 0; i < tabPanels.length; i++) {
+      tabPanels[i].classList.remove("active");
+    }
+    tabButtons = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].classList.remove("active");
+    }
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+
+// New function to get data from the physiology form
+function getPhysiologyData() {
+  // Get values from the form inputs and convert them to numbers as needed
+  const lungCapacity = parseFloat(document.getElementById('lung_capacity').value);
+  const minuteVentilation = parseFloat(document.getElementById('minute_ventilation').value);
+  const cardiacOutput = parseFloat(document.getElementById('cardiac_output').value);
+  const fatPercentage = parseFloat(document.getElementById('fat_percentage').value);
+  const bmr = parseFloat(document.getElementById('bmr').value);
+  const vo2Max = parseFloat(document.getElementById('vo2_max').value);
+
+  // Build an object with the extracted data
+  const physiologyData = {
+    lung_capacity: lungCapacity,
+    minute_ventilation: minuteVentilation,
+    cardiac_output: cardiacOutput,
+    fat_percentage: fatPercentage,
+    bmr: bmr,
+    vo2_max: vo2Max
+  };
+
+  console.log("Physiology Data:", physiologyData);
+
+  // Optionally, send the data to the backend
+  fetch('/update_physiology', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Client-UUID': clientUUID
+    },
+    body: JSON.stringify(physiologyData)
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log("Updated physiology data on server:", data);
+      document.getElementById("physiology-output").innerText = "Physiology updated successfully.";
+    })
+    .catch(error => {
+      console.error("Error updating physiology data:", error);
+      document.getElementById("physiology-output").innerText = "Error updating physiology data.";
+    });
+}
+
+// Attach an event listener to the form submission to call the new function
+document.getElementById("physiology-form").addEventListener("submit", function (event) {
+  event.preventDefault(); // Prevent default form submission
+  getPhysiologyData();
+});
+
 
 // ----- Button Click Handlers -----
 document.getElementById("dive-btn").onclick = dive;

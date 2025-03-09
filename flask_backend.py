@@ -10,6 +10,7 @@ from flasgger import Swagger
 import os
 import signal
 import subprocess
+import threading
 
 
 def kill_port(port):
@@ -26,7 +27,7 @@ def kill_port(port):
         print(f"No processes found on port {port}.")
 
 
-# kill_port(5000)
+#kill_port(5000)
 app = Flask(__name__)
 swagger = Swagger(app)
 
@@ -1279,7 +1280,6 @@ def update_gas_mix():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
-import threading
 
 
 def background_state_update():
@@ -1288,6 +1288,35 @@ def background_state_update():
         # Optionally update other state values...
         time.sleep(1)  # Update every second
 
+
+# In-memory store for demonstration purposes
+physiology_store = {}
+
+@app.route('/update_physiology', methods=['POST'])
+def update_physiology():
+    # Retrieve the Client-UUID from the headers
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid:
+        return jsonify({"status": "error", "message": "Missing Client-UUID header"}), 400
+
+    # Get the JSON data from the request
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "Invalid or missing JSON data"}), 400
+
+    # Log the received data
+    app.logger.info(f"Received physiology data from client {client_uuid}: {data}")
+
+    # Optionally, update a global store (or database) keyed by the client UUID
+    physiology_store[client_uuid] = data
+
+    # Return a success response with the data that was received
+    response_data = {
+        "status": "success",
+        "message": "Physiology data updated",
+        "data": data
+    }
+    return jsonify(response_data), 200
 
 if __name__ == '__main__':
     # Kill any process on port 5000 before starting the server.

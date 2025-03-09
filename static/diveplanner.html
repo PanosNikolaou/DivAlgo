@@ -1,261 +1,293 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diver Pressure Simulation</title>
-  <link rel="icon" type="image/png" href="/static/images/da.ico" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Diver Pressure Simulation</title>
+    <link rel="icon" type="image/png" href="/static/images/da.ico"/>
 
-  <!-- External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Google Fonts -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-    rel="stylesheet"
-  />
+    <!-- Google Fonts -->
+    <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+            rel="stylesheet"
+    />
 
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="/static/css/styles.css" />
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css"/>
 </head>
 <body>
-  <div class="container">
+<div class="container">
     <!-- Left Section -->
     <div class="left-section">
-      <div class="ocean-container">
-        <h1 class="title">
+        <div class="ocean-container">
+            <h1 class="title">
           <span class="logo-container">
-            <img src="/static/images/da-transp.png" alt="Logo" class="logo" />
+            <img src="/static/images/da-transp.png" alt="Logo" class="logo"/>
           </span>
-          DivAlgo - A Diving Decompression Algorithmic Simulator
-        </h1>
-        <h3 id="warning-message">
-          WARNING: This software is experimental and should not be relied upon for
-          actual dives.
-        </h3>
-        <div class="ocean">
-          <img
-            src="/static/images/diver.png"
-            alt="Diver with Tank and Suit"
-            class="diver"
-            id="diver"
-          />
+                DivAlgo - A Diving Decompression Algorithmic Simulator
+            </h1>
+            <h3 id="warning-message">
+                WARNING: This software is experimental and should not be relied upon for
+                actual dives.
+            </h3>
+            <div class="ocean">
+                <img
+                        src="/static/images/diver.png"
+                        alt="Diver with Tank and Suit"
+                        class="diver"
+                        id="diver"
+                />
+            </div>
         </div>
-      </div>
 
-      <!-- Info & Button Wrapper -->
-      <div class="info-button-wrapper">
-        <!-- Info Container -->
-        <div class="info-container">
-          <div class="card">
-            <p>Depth:</p>
-            <span id="depth">0</span> m
-          </div>
-          <div class="card">
-            <p>Pressure:</p>
-            <span id="pressure">1.00</span> atm
-          </div>
-          <div class="card">
-            <p>NDL:</p>
-            <span id="ndl">60.00</span> min
-            <button id="padi-toggle-btn">Enable PADI Tables Lookup</button>
-          </div>
-          <div class="card">
-            <p>Oxygen Toxicity:</p>
-            <span id="toxicity">0.21</span> PO₂
-            <p id="toxicity-label"></p>
-            <span>
+        <!-- Info & Button Wrapper -->
+        <div class="info-button-wrapper">
+            <!-- Info Container -->
+            <div class="info-container">
+                <div class="card">
+                    <p>Depth:</p>
+                    <span id="depth">0</span> m
+                </div>
+                <div class="card">
+                    <p>Pressure:</p>
+                    <span id="pressure">1.00</span> atm
+                </div>
+                <div class="card">
+                    <p>NDL:</p>
+                    <span id="ndl">60.00</span> min
+                    <button id="padi-toggle-btn">Enable PADI Tables Lookup</button>
+                </div>
+                <div class="card">
+                    <p>Oxygen Toxicity:</p>
+                    <span id="toxicity">0.21</span> PO₂
+                    <p id="toxicity-label"></p>
+                    <span>
               <button id="info-btn" class="info-button">Oxygen Toxicity Table ℹ️</button>
             </span>
-          </div>
-          <div class="card">
-            <p>RGBM Factor:</p>
-            <span id="rgbm">1.00</span>
-          </div>
-          <div class="card">
-            <p>Time Elapsed:</p>
-            <span id="time">33</span> sec
-          </div>
-          <div class="card">
-            <p>Time at Depth:</p>
-            <span id="depth-time">33</span> sec
-          </div>
+                </div>
+                <div class="card">
+                    <p>RGBM Factor:</p>
+                    <span id="rgbm">1.00</span>
+                </div>
+                <div class="card">
+                    <p>Time Elapsed:</p>
+                    <span id="time">33</span> sec
+                </div>
+                <div class="card">
+                    <p>Time at Depth:</p>
+                    <span id="depth-time">33</span> sec
+                </div>
+            </div>
+
+            <!-- Button & Decompression Model Selection -->
+            <div class="button-container">
+                <button id="dive-btn">Dive Deeper</button>
+                <button id="ascend-btn">Dive Up</button>
+                <button id="reset-btn">Reset</button>
+                <div
+                        class="rgbm-options"
+                        id="rgbm-options"
+                        style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
+                >
+                    <input type="checkbox" id="rgbm-checkbox"/>
+                    <label
+                            for="rgbm-checkbox"
+                            style="font-size: 14px; font-weight: 500; cursor: pointer;"
+                    >
+                        Integrate RGBM in NDL
+                    </label>
+                </div>
+                <div class="ndl-placeholder">
+                    <label for="deco-model">Decompression Model:</label>
+                    <select id="deco-model">
+                        <option value="bühlmann">Bühlmann ZH-L16</option>
+                        <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>
+                        <option value="vpm">Varying Permeability Model (VPM)</option>
+                        <option value="deepstops">Deep Stops Algorithm</option>
+                        <option value="custom">Custom Algorithm</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
-        <!-- Button & Decompression Model Selection -->
-        <div class="button-container">
-          <button id="dive-btn">Dive Deeper</button>
-          <button id="ascend-btn">Dive Up</button>
-          <button id="reset-btn">Reset</button>
-          <div
-            class="rgbm-options"
-            id="rgbm-options"
-            style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
-          >
-            <input type="checkbox" id="rgbm-checkbox" />
-            <label
-              for="rgbm-checkbox"
-              style="font-size: 14px; font-weight: 500; cursor: pointer;"
-            >
-              Integrate RGBM in NDL
-            </label>
-          </div>
-          <div class="ndl-placeholder">
-            <label for="deco-model">Decompression Model:</label>
-            <select id="deco-model">
-              <option value="bühlmann">Bühlmann ZH-L16</option>
-              <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>
-              <option value="vpm">Varying Permeability Model (VPM)</option>
-              <option value="deepstops">Deep Stops Algorithm</option>
-              <option value="custom">Custom Algorithm</option>
-            </select>
-          </div>
+        <!-- Dive Log -->
+        <div class="log-container" style="display: none;">
+            <h2>Dive Log</h2>
+            <ul id="dive-log"></ul>
         </div>
-      </div>
-
-      <!-- Dive Log -->
-<div class="log-container" style="display: none;">
-  <h2>Dive Log</h2>
-  <ul id="dive-log"></ul>
-</div>
     </div>
 
     <!-- NDL and Graphs Container -->
     <div id="ndl-container">
-      <div class="tab-container">
-        <button class="tab-btn active" onclick="openTab(event, 'ndl-page')">
-          NDL Table
-        </button>
-        <button class="tab-btn" onclick="openTab(event, 'graph-page')">Graphs</button>
-      </div>
-      <div id="dynamic-pages">
-        <!-- Pages will be generated dynamically here -->
-      </div>
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="openTab(event, 'ndl-page')">
+                NDL Table
+            </button>
+            <button class="tab-btn" onclick="openTab(event, 'graph-page')">Graphs</button>
+        </div>
+        <div id="dynamic-pages">
+            <!-- Pages will be generated dynamically here -->
+        </div>
     </div>
 
     <!-- Oxygen Toxicity Table Popup -->
     <div id="toxicity-modal" class="modal">
-      <div class="modal-content">
-        <span class="close-btn">&times;</span>
-        <h2>Oxygen Toxicity Table</h2>
-        <table id="toxicity-table">
-          <thead>
-            <tr>
-              <th>Depth (m)</th>
-              <th>Absolute Pressure (ATA)</th>
-              <th>PPO₂ in Air (bar)</th>
-              <th>PPO₂ in 100% O₂ (bar)</th>
-              <th>Oxygen Toxicity Risk</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Oxygen Toxicity Table</h2>
+            <table id="toxicity-table">
+                <thead>
+                <tr>
+                    <th>Depth (m)</th>
+                    <th>Absolute Pressure (ATA)</th>
+                    <th>PPO₂ in Air (bar)</th>
+                    <th>PPO₂ in 100% O₂ (bar)</th>
+                    <th>Oxygen Toxicity Risk</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 
     <!-- Dive Chart -->
     <div class="chart-container">
-      <canvas id="diveChart"></canvas>
+        <canvas id="diveChart"></canvas>
     </div>
 
     <!-- Gas Mixture Section -->
-<!-- Gas Mixture Section with Vertical Tabs -->
-<!-- Gas Mixture Section with Horizontal Tabs -->
-<div class="yellow-container">
-  <h2>Equipment</h2>
-  <div class="horizontal-tabs">
-    <!-- Tab Buttons -->
-    <div class="tab-buttons">
-      <button class="tab-btn active" onclick="openGasTab(event, 'gas-mixtures')">Gas Mixtures</button>
-      <button class="tab-btn" onclick="openGasTab(event, 'gas-stats')">Statistics</button>
-      <button class="tab-btn" onclick="openGasTab(event, 'gas-options')">Options</button>
+    <!-- Gas Mixture Section with Vertical Tabs -->
+    <!-- Gas Mixture Section with Horizontal Tabs -->
+    <div class="yellow-container">
+        <h2>Diving Parameters</h2>
+        <div class="horizontal-tabs">
+            <!-- Tab Buttons -->
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="openGasTab(event, 'gas-mixtures')">Gas Mixtures</button>
+                <button class="tab-btn" onclick="openGasTab(event, 'diver-physiology')">Diver Physiology</button>
+                <button class="tab-btn" onclick="openGasTab(event, 'sd-aqi')">SD-AQI</button>
+            </div>
+            <!-- Tab Panels -->
+            <div class="tab-panels">
+                <!-- Gas Mixtures Panel -->
+                <div id="gas-mixtures" class="tab-panel active">
+                    <div class="gas-values">
+                        <div class="gas-item">
+                            <span class="value" id="o2">0.21</span>
+                            <span class="label">O₂</span>
+                        </div>
+                        <div class="gas-item">
+                            <span class="value" id="n2">0.79</span>
+                            <span class="label">N₂</span>
+                        </div>
+                        <div class="gas-item">
+                            <span class="value" id="he">0.00</span>
+                            <span class="label">He</span>
+                        </div>
+                    </div>
+                    <div class="gas-options">
+                        <div class="gas-card selected">
+                            <img src="/static/images/air.webp" alt="Air"/>
+                            <span>Air</span>
+                        </div>
+                        <div class="gas-card">
+                            <img src="/static/images/ean32.webp" alt="EANx32"/>
+                            <span>EANx32</span>
+                        </div>
+                        <div class="gas-card">
+                            <img src="/static/images/ean36.webp" alt="EANx36"/>
+                            <span>EANx36</span>
+                        </div>
+                        <div class="gas-card">
+                            <img src="/static/images/ean40.webp" alt="EANx40"/>
+                            <span>EANx40</span>
+                        </div>
+                        <div class="gas-card">
+                            <img src="/static/images/enriched.webp" alt="Enriched"/>
+                            <span>Enriched</span>
+                        </div>
+                        <div class="gas-card">
+                            <img src="/static/images/trimix.webp" alt="Trimix"/>
+                            <span>Trimix</span>
+                        </div>
+                        <div class="gas-card">
+                            <img src="/static/images/rebreather.webp" alt="Rebreather"/>
+                            <span>Rebreather</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Physiology Panel (empty for now) -->
+                <div id="diver-physiology" class="tab-panel">
+                    <h3>Diver Physiology Parameters</h3>
+                    <form id="physiology-form">
+                        <div>
+                            <label for="lung_capacity">Lung Capacity (L):</label>
+                            <input type="number" id="lung_capacity" name="lung_capacity" step="0.1" value="6.0"/>
+                        </div>
+                        <div>
+                            <label for="minute_ventilation">Minute Ventilation (L/min):</label>
+                            <input type="number" id="minute_ventilation" name="minute_ventilation" step="0.1"
+                                   value="12.0"/>
+                        </div>
+                        <div>
+                            <label for="cardiac_output">Cardiac Output (L/min):</label>
+                            <input type="number" id="cardiac_output" name="cardiac_output" step="0.1" value="5.0"/>
+                        </div>
+                        <div>
+                            <label for="fat_percentage">Body Fat Percentage (%):</label>
+                            <input type="number" id="fat_percentage" name="fat_percentage" step="1" value="20"/>
+                        </div>
+                        <div>
+                            <label for="bmr">Basal Metabolic Rate (kcal/day):</label>
+                            <input type="number" id="bmr" name="bmr" step="1" value="1500"/>
+                        </div>
+                        <div>
+                            <label for="vo2_max">VO₂ Max (ml/kg/min):</label>
+                            <input type="number" id="vo2_max" name="vo2_max" step="1" value="40"/>
+                        </div>
+                        <button type="submit">Update Physiology</button>
+                    </form>
+                    <div id="physiology-output">
+                        <!-- Output calculated physiology values here -->
+                    </div>
+                </div>
+
+<!-- Options Panel -->
+<div id="sd-aqi" class="tab-panel">
+  <h3>Options Panel</h3>
+  <div class="options-section">
+    <h4>Air Quality</h4>
+    <div class="option-group">
+      <label for="air-quality-index">Air Quality Index:</label>
+      <input type="number" id="air-quality-index" name="air_quality_index" step="1" placeholder="Enter AQI">
     </div>
-    <!-- Tab Panels -->
-    <div class="tab-panels">
-      <!-- Gas Mixtures Panel -->
-      <div id="gas-mixtures" class="tab-panel active">
-        <div class="gas-values">
-          <div class="gas-item">
-            <span class="value" id="o2">0.21</span>
-            <span class="label">O₂</span>
-          </div>
-          <div class="gas-item">
-            <span class="value" id="n2">0.79</span>
-            <span class="label">N₂</span>
-          </div>
-          <div class="gas-item">
-            <span class="value" id="he">0.00</span>
-            <span class="label">He</span>
-          </div>
-        </div>
-        <div class="gas-options">
-          <div class="gas-card selected">
-            <img src="/static/images/air.webp" alt="Air" />
-            <span>Air</span>
-          </div>
-          <div class="gas-card">
-            <img src="/static/images/ean32.webp" alt="EANx32" />
-            <span>EANx32</span>
-          </div>
-          <div class="gas-card">
-            <img src="/static/images/ean36.webp" alt="EANx36" />
-            <span>EANx36</span>
-          </div>
-          <div class="gas-card">
-            <img src="/static/images/ean40.webp" alt="EANx40" />
-            <span>EANx40</span>
-          </div>
-          <div class="gas-card">
-            <img src="/static/images/enriched.webp" alt="Enriched" />
-            <span>Enriched</span>
-          </div>
-          <div class="gas-card">
-            <img src="/static/images/trimix.webp" alt="Trimix" />
-            <span>Trimix</span>
-          </div>
-          <div class="gas-card">
-            <img src="/static/images/rebreather.webp" alt="Rebreather" />
-            <span>Rebreather</span>
-          </div>
-        </div>
-      </div>
-      <!-- Statistics Panel (empty for now) -->
-      <div id="gas-stats" class="tab-panel">
-        <p>No statistics available yet.</p>
-      </div>
-      <!-- Options Panel (empty for now) -->
-      <div id="gas-options" class="tab-panel">
-        <p>No options available yet.</p>
-      </div>
+    <div class="option-group">
+      <label for="sd-air-quality-index">SD Air Quality Index:</label>
+      <input type="number" id="sd-air-quality-index" name="sd_air_quality_index" step="1" placeholder="Enter SD AQI">
+    </div>
+  </div>
+  <div class="options-section">
+    <h4>Air Filling</h4>
+    <div class="option-group">
+      <label for="compressor">Compressor:</label>
+      <input type="text" id="compressor" name="compressor" placeholder="Enter compressor details">
+    </div>
+    <div class="option-group">
+      <label for="oil">Oil:</label>
+      <input type="text" id="oil" name="oil" placeholder="Enter oil details">
     </div>
   </div>
 </div>
 
-<!-- Inline CSS for Horizontal Tabs -->
-<style>
-
-</style>
-
-<!-- JavaScript Function for Horizontal Tabs -->
-<script>
-  function openGasTab(evt, tabName) {
-    var i, tabPanels, tabButtons;
-    tabPanels = document.getElementsByClassName("tab-panel");
-    for (i = 0; i < tabPanels.length; i++) {
-      tabPanels[i].classList.remove("active");
-    }
-    tabButtons = document.getElementsByClassName("tab-btn");
-    for (i = 0; i < tabButtons.length; i++) {
-      tabButtons[i].classList.remove("active");
-    }
-    document.getElementById(tabName).classList.add("active");
-    evt.currentTarget.classList.add("active");
-  }
-</script>
-
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript -->
     <script src="/static/js/script.js"></script>
     <!-- Make sure that your script.js file defines functions like openTab() -->
-  </div>
+</div>
 </body>
 </html>

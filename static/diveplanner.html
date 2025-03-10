@@ -74,26 +74,50 @@
 <div class="container">
     <!-- Left Section -->
     <div class="left-section">
-<div class="ocean-container">
-  <h1 class="title">
+        <div class="ocean-container">
+            <h1 class="title">
     <span class="logo-container">
       <img src="/static/images/da-transp.png" alt="Logo" class="logo"/>
     </span>
-    DivAlgo - A Diving Decompression Algorithmic Simulator
-  </h1>
-  <h3 id="warning-message">
-    Caution: This software is experimental and intended solely for educational and learning purposes. It should not be used for actual dive operations.
-  </h3>
-  <div class="ocean">
-    <img src="/static/images/diver.png" alt="Diver with Tank and Suit" class="diver" id="diver"/>
-    <!-- Moved button container here so it overlays the ocean/diver image -->
-    <div class="button-container">
-      <button id="dive-btn">Dive Deeper</button>
-      <button id="ascend-btn">Dive Up</button>
-      <button id="reset-btn">Reset</button>
-    </div>
-  </div>
-</div>
+                DivAlgo - A Diving Decompression Algorithmic Simulator
+            </h1>
+            <h3 id="warning-message">
+                Caution: This software is experimental and intended solely for educational and learning purposes. It
+                should not be used for actual dive operations.
+            </h3>
+            <div class="ocean">
+                <img src="/static/images/diver.png" alt="Diver with Tank and Suit" class="diver" id="diver"/>
+
+                <!-- Button container (positioned elsewhere) -->
+                <div class="button-container">
+                    <button id="dive-btn">Dive Deeper</button>
+                    <button id="ascend-btn">Dive Up</button>
+                    <button id="reset-btn">Reset</button>
+                </div>
+
+                <!-- Diving Settings container positioned on the left -->
+                <div class="diving-settings">
+                    <button id="padi-toggle-btn">Enable RDP Tables Lookup</button>
+                    <div class="rgbm-options" id="rgbm-options">
+                        <input type="checkbox" id="rgbm-checkbox"/>
+                        <label for="rgbm-checkbox">Integrate RGBM in NDL</label>
+                    </div>
+                    <!--    <span>-->
+                    <!--      <button id="info-btn" class="info-button">Oxygen Toxicity Table ℹ️</button>-->
+                    <!--    </span>-->
+                    <div class="ndl-placeholder">
+                        <label for="deco-model">Decompression Model:</label>
+                        <select id="deco-model">
+                            <option value="bühlmann">Bühlmann ZH-L16</option>
+                            <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>
+                            <option value="vpm">Varying Permeability Model (VPM)</option>
+                            <option value="deepstops">Deep Stops Algorithm</option>
+                            <option value="custom">Custom Algorithm</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
         <!-- Info & Button Wrapper -->
@@ -130,28 +154,33 @@
                     <p>Time at Depth:</p>
                     <span id="depth-time">33</span> sec
                 </div>
+                <div class="card">
+                    <p>Time at Depth:</p>
+                    <span id="depth-time">33</span> sec
+                </div>
             </div>
 
             <!-- Button & Decompression Model Selection -->
-<!--            <div class="button-container">-->
-<!--                <button id="dive-btn">Dive Deeper</button>-->
-<!--                <button id="ascend-btn">Dive Up</button>-->
-<!--                <button id="reset-btn">Reset</button>-->
-<!--                <div class="ndl-placeholder">-->
-<!--                    <label for="deco-model">Decompression Model:</label>-->
-<!--                    <select id="deco-model">-->
-<!--                        <option value="bühlmann">Bühlmann ZH-L16</option>-->
-<!--                        <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>-->
-<!--                        <option value="vpm">Varying Permeability Model (VPM)</option>-->
-<!--                        <option value="deepstops">Deep Stops Algorithm</option>-->
-<!--                        <option value="custom">Custom Algorithm</option>-->
-<!--                    </select>-->
-<!--                </div>-->
-<!--            </div>-->
+            <!--            <div class="button-container">-->
+            <!--                <button id="dive-btn">Dive Deeper</button>-->
+            <!--                <button id="ascend-btn">Dive Up</button>-->
+            <!--                <button id="reset-btn">Reset</button>-->
+            <!--                <div class="ndl-placeholder">-->
+            <!--                    <label for="deco-model">Decompression Model:</label>-->
+            <!--                    <select id="deco-model">-->
+            <!--                        <option value="bühlmann">Bühlmann ZH-L16</option>-->
+            <!--                        <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>-->
+            <!--                        <option value="vpm">Varying Permeability Model (VPM)</option>-->
+            <!--                        <option value="deepstops">Deep Stops Algorithm</option>-->
+            <!--                        <option value="custom">Custom Algorithm</option>-->
+            <!--                    </select>-->
+            <!--                </div>-->
+            <!--            </div>-->
         </div>
 
         <!-- Dive Log -->
-        <div class="log-container" style="display: none;">
+<!--        <div class="log-container" style="display: none;">-->
+        <div class="log-container">
             <h2>Dive Log</h2>
             <ul id="dive-log"></ul>
         </div>
@@ -199,33 +228,33 @@
     <!-- Gas Mixture Section with Horizontal Tabs -->
     <div class="yellow-container">
         <h2>Diving Parameters</h2>
-                            <button id="padi-toggle-btn">Enable RDP Tables Lookup</button>
-                    <div
-                            class="rgbm-options"
-                            id="rgbm-options"
-                            style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"
-                    >
-                        <input type="checkbox" id="rgbm-checkbox"/>
-                        <label
-                                for="rgbm-checkbox"
-                                style="font-size: 14px; font-weight: 500; cursor: pointer;"
-                        >
-                            Integrate RGBM in NDL
-                        </label>
-                    </div>
-                            <span>
-              <button id="info-btn" class="info-button">Oxygen Toxicity Table ℹ️</button>
-            </span>
-              <div class="ndl-placeholder">
-        <label for="deco-model">Decompression Model:</label>
-        <select id="deco-model">
-          <option value="bühlmann">Bühlmann ZH-L16</option>
-          <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>
-          <option value="vpm">Varying Permeability Model (VPM)</option>
-          <option value="deepstops">Deep Stops Algorithm</option>
-          <option value="custom">Custom Algorithm</option>
-        </select>
-      </div>
+        <!--        <button id="padi-toggle-btn">Enable RDP Tables Lookup</button>-->
+        <!--        <div-->
+        <!--                class="rgbm-options"-->
+        <!--                id="rgbm-options"-->
+        <!--                style="margin-top: 5px; display: flex; align-items: center; gap: 8px;"-->
+        <!--        >-->
+        <!--            <input type="checkbox" id="rgbm-checkbox"/>-->
+        <!--            <label-->
+        <!--                    for="rgbm-checkbox"-->
+        <!--                    style="font-size: 14px; font-weight: 500; cursor: pointer;"-->
+        <!--            >-->
+        <!--                Integrate RGBM in NDL-->
+        <!--            </label>-->
+        <!--        </div>-->
+        <!--        <span>-->
+        <!--              <button id="info-btn" class="info-button">Oxygen Toxicity Table ℹ️</button>-->
+        <!--            </span>-->
+        <!--        <div class="ndl-placeholder">-->
+        <!--            <label for="deco-model">Decompression Model:</label>-->
+        <!--            <select id="deco-model">-->
+        <!--                <option value="bühlmann">Bühlmann ZH-L16</option>-->
+        <!--                <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>-->
+        <!--                <option value="vpm">Varying Permeability Model (VPM)</option>-->
+        <!--                <option value="deepstops">Deep Stops Algorithm</option>-->
+        <!--                <option value="custom">Custom Algorithm</option>-->
+        <!--            </select>-->
+        <!--        </div>-->
         <div class="horizontal-tabs">
             <!-- Tab Buttons -->
             <div class="tab-buttons">
@@ -251,11 +280,15 @@
                             <span class="label">He</span>
                         </div>
                     </div>
+                    <span>
+                        <button id="info-btn" class="info-button">Oxygen Toxicity Table ℹ️</button>
+                    </span>
                     <div class="gas-options">
                         <div class="gas-card selected">
                             <img src="/static/images/air.webp" alt="Air"/>
                             <span>Air</span>
                         </div>
+
                         <div class="gas-card">
                             <img src="/static/images/ean32.webp" alt="EANx32"/>
                             <span>EANx32</span>

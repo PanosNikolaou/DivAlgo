@@ -83,7 +83,7 @@ img {
 
 /* Decompression Model Selector */
 .ndl-placeholder select {
-  width: 250px;
+  width: 200px;
   height: 50px;
   font-size: 16px;
   padding: 10px;
@@ -127,6 +127,7 @@ img {
   transition: bottom 0.5s ease-in-out;
   box-shadow: 0 -4px 10px rgba(0, 255, 0, 0.2);
   border-radius: 5px 5px 0 0;
+  z-index = -1;
 }
 
 .log-container:hover {
@@ -191,6 +192,36 @@ img {
   overflow: hidden;
   border-radius: 10px;
 }
+
+
+.diving-settings {
+  position: absolute; /* Enables positioning relative to the .ocean container */
+  top: 20px;          /* Adjust vertical position as needed */
+  left: 20px;         /* Adjust horizontal position as needed */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;        /* Ensure it sits above the background diver image */
+  text-align: left;   /* Align inner text to the left */
+  background-color: rgba(255, 255, 255, 0.2); /* Optional: add a background for readability */
+  padding: 10px;      /* Optional: inner spacing */
+  border-radius: 5px; /* Optional: rounded corners */
+}
+
+/* Optional: Style inner elements (override inline styles if necessary) */
+.diving-settings .rgbm-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diving-settings label {
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #333;
+}
+
 
 /* Position the button container absolutely within the .ocean element */
 /*.button-container {
@@ -274,7 +305,7 @@ img {
 }
 
 /* Wrapper for Info Panel & Buttons */
-.info-button-wrapper {
+/*.info-button-wrapper {
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -285,46 +316,69 @@ img {
     flex-wrap: wrap;
     align-content: center;
     flex-direction: row;
+}*/
+
+.info-button-wrapper {
+  display: flex;
+  flex-direction: column; /* or row, if you prefer */
+  align-items: center;    /* center children horizontally */
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
+  margin: 0 auto;
+  padding: 5px 0;
 }
 
+
+/* Parent Wrapper: Center its contents horizontally */
+/*.info-button-wrapper {
+  display: flex;
+  justify-content: center;   *//* Ensures child items are centered horizontally *//*
+  align-items: flex-start;   *//* or center, if you want them vertically aligned in the middle *//*
+  flex-wrap: wrap;
+  gap: 30px;
+  width: 100%;
+  padding: 5px 0;
+  *//* Remove any left-side padding or other offsets if you want true center alignment *//*
+}*/
+
+/* The Container for Your Cards */
 .info-container {
   display: grid;
-  /* 3 columns, each taking up 1 fraction of the remaining space */
-  grid-template-columns: repeat(3, 1fr);
-  /* Spacing between columns and rows */
-  gap: 10px;
-  /* Center each card within its grid cell (optional) */
-  justify-items: center;
-  /* Optionally limit the container width */
-  max-width: 900px;
-  margin: 0 auto; /* centers the container horizontally */
+  grid-template-columns: repeat(4, 1fr); /* Three columns */
+  gap: 20px;               /* Spacing between columns/rows */
+  justify-items: center;   /* Centers each card within its cell */
+  max-width: auto;        /* Optional: limit the container width */
+  margin: 10px;          /* Horizontally center the grid container */
+  padding: 15px;           /* Optional padding around the grid */
+  background-color: white; /* Optional background */
+  border-radius: 10px;     /* Optional rounded corners */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  flex-wrap: wrap;
-  padding: 15px;
-
 }
 
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .info-container {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
   }
 }
 
 @media (max-width: 480px) {
   .info-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* 1 column on narrow screens */
   }
 }
 
-/* If needed, you can keep or adjust your existing .card styling */
+/* Card styling */
 .card {
-  background-color: #fff;
+  background-color: #f8f9fa;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   padding: 15px;
   text-align: center;
-  width: 180px;  /* Or auto, if you prefer the card to size to content */
+  width: 180px; /* or auto if you want them to size to content */
 }
+
 
 
 /*.info-container {
@@ -446,14 +500,14 @@ button:hover {
 
 /* NDL Placeholder Styling */
 .ndl-placeholder {
-  width: 100%;
+  width: 90%;
   border: 2px dashed #007bff;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: 16px;
+  font-size: 14px;
   color: #007bff;
   font-weight: bold;
   padding: 15px;
@@ -801,7 +855,7 @@ button:hover {
   background-color: #0077cc; /* Blue background */
   color: #fff;              /* White text */
   border: none;
-  padding: 10px 20px;
+  padding: 0px 0px;
   font-size: 1rem;
   border-radius: 5px;
   cursor: pointer;
@@ -821,7 +875,7 @@ button:hover {
 #padi-toggle-btn {
   display: block;
   width: 240px;
-  margin: 0 auto 20px auto;
+  margin: 0 0 0 0;
   padding: 12px;
   background: linear-gradient(45deg, #6c5ce7, #a29bfe);
   color: #fff;
@@ -845,7 +899,7 @@ button:hover {
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   padding: 15px;
-  width: 240px;
+  width: 200px;
   text-align: center;
 }
 
@@ -1220,3 +1274,54 @@ button:hover {
       margin-top: 10px;
       display: inline-block;
     }
+
+    /* Horizontal Diving Settings Bar */
+.diving-settings-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;               /* Space between items */
+  padding: 10px 20px;      /* Internal padding */
+  background-color: #fff;  /* White background for contrast */
+  border-bottom: 2px solid #007bff; /* Optional bottom border */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;     /* Space below the bar */
+}
+
+/* Optional: Styling for the items inside the bar */
+.diving-settings-bar button {
+  padding: 8px 16px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.diving-settings-bar button:hover {
+  background-color: #0056b3;
+}
+
+.diving-settings-bar .rgbm-options,
+.diving-settings-bar .ndl-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diving-settings-bar .ndl-placeholder label {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  color: #333;
+}
+
+.diving-settings-bar .ndl-placeholder select {
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  background-color: #fff;
+}

@@ -303,7 +303,18 @@ async function fetchOxygenToxicityTable() {
 function renderNDLPage(state) {
   return `
     <div id="ndl-page" class="tab-content">
-      <h3>Bühlmann ZH-L16 Decompression Model</h3>
+
+                          <div class="ndl-placeholder">
+                        <label for="deco-model">Decompression Model:</label>
+                        <select id="deco-model">
+                            <option value="bühlmann">Bühlmann ZH-L16</option>
+                            <option value="rgbm">Reduced Gradient Bubble Model (RGBM)</option>
+                            <option value="vpm">Varying Permeability Model (VPM)</option>
+                            <option value="deepstops">Deep Stops Algorithm</option>
+                            <option value="custom">Custom Algorithm</option>
+                        </select>
+                    </div>
+                    <h3>Bühlmann ZH-L16 Decompression Model</h3>
       <div class="ndl-output">
         <p><strong>Current NDL:</strong> <span id="ndl-value">${state.ndl.toFixed(2)}</span> minutes</p>
       </div>

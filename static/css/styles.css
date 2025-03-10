@@ -105,6 +105,184 @@ img {
   margin-bottom: 5px;
   display: block;
 }
+/*
+
+*/
+/* Ensure the main container is the positioning context *//*
+
+.container {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative; */
+/* Added so absolute children position relative to this container *//*
+
+}
+
+*/
+/* Log Container positioned at the bottom of the .container *//*
+
+.log-container {
+  width: 90%;
+  background: #1e1e1e;
+  color: #33ff33;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  padding: 15px;
+  border-top: 2px solid #00ff00; */
+/* border at the top edge *//*
+
+  overflow-y: auto;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: absolute;  */
+/* Changed from fixed to absolute *//*
+
+  bottom: -170px;      */
+/* Initially hide it below the container *//*
+
+  left: 0;
+  right: 0;
+  transition: bottom 0.5s ease-in-out;
+  box-shadow: 0 -4px 10px rgba(0, 255, 0, 0.2);
+  border-radius: 5px 5px 0 0;
+  z-index: 1000;       */
+/* Ensure it appears on top of other elements *//*
+
+}
+
+.log-container:hover {
+  bottom: 0;  */
+/* Slide up into view on hover *//*
+
+}
+
+.log-container h2 {
+  font-size: 14px;
+  color: #00ff00;
+  margin: 5px 0;
+  padding: 5px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 1px solid #00ff00;
+}
+
+.log-entry {
+  width: 100%;
+  font-size: 13px;
+  text-align: left;
+  padding: 2px 5px;
+  white-space: pre-wrap;
+}
+
+.log-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #111;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #00ff00;
+  border-radius: 4px;
+}
+*/
+
+/*
+
+*/
+/* Ensure the parent container is positioned relative *//*
+
+.container {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative; */
+/* Added so absolute children position relative to this container *//*
+
+}
+
+*/
+/* Updated Log Container: Positioned absolutely within .container *//*
+
+.log-container {
+  width: 100%;
+  background: #1e1e1e;
+  color: #33ff33;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  padding: 15px;
+  border-bottom: 2px solid #00ff00; */
+/* Use bottom border when placed at top *//*
+
+  overflow-y: auto;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: absolute; */
+/* Changed from fixed to absolute *//*
+
+  top: -150px;       */
+/* Initially hidden above the container *//*
+
+  left: 0;
+  right: 0;
+  transition: bottom 0.5s ease-in-out; */
+/* Transition on top property *//*
+
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.2);
+  border-radius: 0 0 5px 5px;       */
+/* Rounded bottom corners *//*
+
+  z-index: 1000; */
+/* High z-index to appear on top of other UI elements *//*
+
+}
+
+.log-container:hover {
+  top: 0;  */
+/* Slide into view when hovered *//*
+
+}
+
+.log-container h2 {
+  font-size: 14px;
+  color: #00ff00;
+  margin: 5px 0;
+  padding: 5px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 1px solid #00ff00;
+}
+
+.log-entry {
+  width: 100%;
+  font-size: 13px;
+  text-align: left;
+  padding: 2px 5px;
+  white-space: pre-wrap;
+}
+
+.log-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #111;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #00ff00;
+  border-radius: 4px;
+}
+
+*/
 
 /* Terminal-Style Dive Log Container */
 .log-container {
@@ -127,7 +305,7 @@ img {
   transition: bottom 0.5s ease-in-out;
   box-shadow: 0 -4px 10px rgba(0, 255, 0, 0.2);
   border-radius: 5px 5px 0 0;
-  z-index = -1;
+  z-index: 1000;
 }
 
 .log-container:hover {

@@ -192,6 +192,42 @@ img {
   border-radius: 10px;
 }
 
+/* Position the button container absolutely within the .ocean element */
+/*.button-container {
+  position: absolute;
+  bottom: 20px;  *//* adjust vertical position as needed *//*
+  right: 20px;   *//* adjust horizontal position as needed *//*
+  display: flex;
+  flex-direction: column;  *//* or row, if you prefer a horizontal layout *//*
+  gap: 10px;
+  z-index: 10;  *//* ensure it appears on top of the diver image *//*
+}*/
+
+/*.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 30%;
+  max-width: 220px;
+  margin-top: 10px;
+  right: 20px;
+  left: 10px;
+}*/
+
+.button-container {
+  position: absolute;   /* Enable absolute positioning */
+  bottom: 20px;         /* Distance from the bottom of the .ocean container */
+  right: 20px;          /* Distance from the right of the .ocean container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 20%;          /* Let it size automatically or set a fixed width if needed */
+  z-index: 10;          /* Ensure it sits above the diver image */
+}
+
+
 #rgbm-options {
   margin-top: 5px;
   display: flex;
@@ -252,19 +288,59 @@ img {
 }
 
 .info-container {
+  display: grid;
+  /* 3 columns, each taking up 1 fraction of the remaining space */
+  grid-template-columns: repeat(3, 1fr);
+  /* Spacing between columns and rows */
+  gap: 10px;
+  /* Center each card within its grid cell (optional) */
+  justify-items: center;
+  /* Optionally limit the container width */
+  max-width: 900px;
+  margin: 0 auto; /* centers the container horizontally */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  padding: 15px;
+
+}
+
+@media (max-width: 768px) {
+  .info-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .info-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* If needed, you can keep or adjust your existing .card styling */
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  text-align: center;
+  width: 180px;  /* Or auto, if you prefer the card to size to content */
+}
+
+
+/*.info-container {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 15px;
   background: white;
-  /*margin: 0, 0, 0, 10px;*/
+  *//*margin: 0, 0, 0, 10px;*//*
   padding: 15px;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   width: 65%;
   max-width: 650px;
   margin-top: 8px;
-}
+}*/
 
 .info {
   font-size: 16px;
@@ -277,16 +353,6 @@ img {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.button-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 40%;
-  max-width: 220px;
-  margin-top: 10px;
 }
 
 /* Button Styling */
@@ -766,12 +832,12 @@ button:hover {
 }
 
 /* Container for cards */
-.info-container {
+/*.info-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
-}
+}*/
 
 /* Each card */
 .card {

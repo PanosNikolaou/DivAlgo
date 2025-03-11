@@ -1020,9 +1020,9 @@ button:hover {
 #warning-message {
     color: #ff2211; /* Bright red text */
     font-weight: bold;
-    font-size: 1.5em; /* Slightly larger than normal */
+    font-size: 1.3em; /* Slightly larger than normal */
     background-color: #ffecec; /* Light red background */
-    padding: 10px 15px; /* Add some padding */
+    padding: 5px 15px; /* Add some padding */
     border: 2px solid #ff0000; /* Red border */
     border-radius: 5px; /* Rounded corners */
     text-align: center; /* Center the text */

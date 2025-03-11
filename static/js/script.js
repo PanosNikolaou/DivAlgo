@@ -48,7 +48,7 @@ function generateUUID() {
 // ----- API Functions -----
 async function fetchState() {
   try {
-    const response = await fetch("/state", { headers });
+    const response = await fetch("/api/v1/state", { headers });
     const data = await response.json();
     updateDiverDisplay(data);
   } catch (error) {
@@ -59,7 +59,7 @@ fetchState(); // Call on page load
 
 async function dive() {
   try {
-    const response = await fetch("/dive", {
+    const response = await fetch("/api/v1/dive", {
       method: "POST",
       headers: {
         "Client-UUID": clientUUID,
@@ -79,7 +79,7 @@ async function dive() {
 
 async function ascend() {
   try {
-    const response = await fetch("/ascend", {
+    const response = await fetch("/api/v1/ascend", {
       method: "POST",
       headers: {
         "Client-UUID": clientUUID,
@@ -97,7 +97,7 @@ async function ascend() {
 
 async function fetchLogs() {
   try {
-    const response = await fetch("/logs", {
+    const response = await fetch("/api/v1/logs", {
       method: "GET",
       headers
     });
@@ -230,7 +230,7 @@ function logDiveData(data) {
 }
 
 function resetSimulation() {
-  fetch('/reset', { method: "POST" })
+  fetch('/api/v1//reset', { method: "POST" })
     .then(() => {
       const logList = document.getElementById("dive-log");
       if (logList) logList.innerHTML = "";
@@ -275,7 +275,7 @@ window.onclick = function(event) {
 
 async function fetchOxygenToxicityTable() {
   try {
-    const response = await fetch("/oxygen-toxicity-table");
+    const response = await fetch("/api/v1/oxygen-toxicity-table");
     const tableData = await response.json();
     let tbody = document.querySelector("#toxicity-table tbody");
     if (!tbody) {
@@ -343,7 +343,7 @@ function renderNDLPage(state) {
 }
 
 function fetchStateAndEnableRGBM() {
-    fetch('/state')
+    fetch('/api/v1/state')
     .then(response => response.json())
     .then(state => {
         document.getElementById("ndl-value").textContent = state.ndl.toFixed(2);
@@ -364,7 +364,7 @@ function toggleRGBM() {
     let rgbmCheckbox = document.getElementById("rgbm-checkbox");
     let useRGBM = rgbmCheckbox.checked; // Get the current state from the UI
 
-    fetch('/toggle-rgbm-ndl', {
+    fetch('/api/v1/toggle-rgbm-ndl', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ use_rgbm: useRGBM }) // Send the updated state
@@ -448,7 +448,7 @@ function fetchDecoStops() {
   console.log("   Time Elapsed:", time_elapsed, "sec");
   console.log("   Time at Depth:", time_at_depth, "sec");
 
-  fetch('/calculate_ndl_stops', {
+  fetch('/api/v1/calculate_ndl_stops', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -503,7 +503,7 @@ function updateNDL(ndlValue) {
 
 // ----- Fetch NDL Data -----
 function fetchNDL() {
-  fetch('/state')
+  fetch('/api/v1/state')
     .then(response => response.json())
     .then(state => {
         try {
@@ -552,7 +552,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       // Send selected model to backend
-      fetch("/set-deco-model", {
+      fetch("/api/v1/set-deco-model", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deco_model: this.value }),
@@ -650,7 +650,7 @@ function updateGasValues() {
     console.log(`Updated gas mix to ${gasLabel}: O₂ = ${o2Value}, N₂ = ${n2Value}, He = ${heValue}`);
 
     // Send updated gas mix values to Flask backend
-    fetch('/update_gas_mix', {
+    fetch('/api/v1//update_gas_mix', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -679,7 +679,7 @@ let isFetchingState = false;
 function fetchStateAndUpdate() {
   if (isFetchingState) return;
   isFetchingState = true;
-  fetch('/state')
+  fetch('/api/v1/state')
     .then(response => response.json())
     .then(state => {
       updateNDLContainer(state);
@@ -707,7 +707,7 @@ function togglePadiNDL() {
   let newStatus = !currentStatus;
 
   // Send the new status to the backend
-  fetch('/toggle-padi-ndl', {
+  fetch('/api/v1/toggle-padi-ndl', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -781,7 +781,7 @@ function getPhysiologyData() {
   console.log("Physiology Data:", physiologyData);
 
   // Optionally, send the data to the backend
-  fetch('/update_physiology', {
+  fetch('/api/v1/update_physiology', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

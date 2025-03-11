@@ -11,6 +11,23 @@ import os
 import signal
 import subprocess
 import threading
+from flask import Blueprint, current_app, request, jsonify
+from functools import wraps
+
+# Create a blueprint for debug endpoints
+debug_bp = Blueprint('debug', __name__)
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # Example: check for a custom API key in headers
+        api_key = request.headers.get("X-DEBUG-API-KEY")
+        if not api_key or api_key != current_app.config.get("DEBUG_API_KEY"):
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 def kill_port(port):
@@ -27,24 +44,43 @@ def kill_port(port):
         print(f"No processes found on port {port}.")
 
 
-# kill_port(5000)
 app = Flask(__name__)
-swagger = Swagger(app)
+app.config["ADMIN_TOKEN"] = "your-secret-admin-token"
+app.config["ENV"] = "development"
+app.config["DEBUG"] = True  # Optional, but useful for debugging
+
+# Now register the blueprint if in development mode:
+if app.config.get("ENV") == "development":
+    app.register_blueprint(debug_bp, url_prefix="/debug")
+
+# swagger = Swagger(app)
+
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "My Custom API",
+        "description": "This is the API documentation for My Custom API.",
+        "version": "1.0.0",
+        "termsOfService": "http://example.com/terms-of-service",
+        "contact": {
+            "name": "API Support",
+            "email": "support@example.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "basePath": "/",  # Base path for your endpoints
+    "schemes": [
+        "http",
+        "https"
+    ]
+}
+
+swagger = Swagger(app, template=swagger_template)
 
 # Define Bühlmann tissue compartments
-# buhlmann_tissues = [
-#     {"tissue": 1, "half_time": 4, "M-value": 1.57},
-#     {"tissue": 2, "half_time": 8, "M-value": 1.42},
-#     {"tissue": 3, "half_time": 12.5, "M-value": 1.34},
-#     {"tissue": 4, "half_time": 18.5, "M-value": 1.28},
-#     {"tissue": 5, "half_time": 27, "M-value": 1.23},
-#     {"tissue": 6, "half_time": 38.3, "M-value": 1.20},
-#     {"tissue": 7, "half_time": 54.3, "M-value": 1.17},
-#     {"tissue": 8, "half_time": 77, "M-value": 1.14},
-#     {"tissue": 9, "half_time": 109, "M-value": 1.11},
-#     {"tissue": 10, "half_time": 146, "M-value": 1.08}
-# ]
-# Global tissue compartments using PADI-based values:
 buhlmann_tissues = [
     {"tissue": 1, "half_time": 4, "M-value": 1.57},
     {"tissue": 2, "half_time": 8, "M-value": 1.42},
@@ -66,7 +102,53 @@ last_update_time = time.time()
 dive_log = []
 
 
+@app.route('/api/v1/update_tissue_state', methods=['GET'])
+def update_tissue_state_endpoint():
+    """
+    Update the tissue state for each compartment based on current dive parameters.
+    ---
+    tags:
+      - Tissue State
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Tissue state updated successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Confirmation message.
+              example: "Tissue state updated successfully."
+            tissue_state:
+              type: object
+              description: Updated tissue state values for each compartment.
+              example:
+                A: 1.23
+                B: 2.34
+    """
+    update_tissue_state()
+    return jsonify({
+        "message": "Tissue state updated successfully.",
+        "tissue_state": tissue_state
+    })
+
+
 def update_tissue_state():
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
     global tissue_state, last_update_time
 
     current_time = time.time()
@@ -86,12 +168,50 @@ def update_tissue_state():
         tissue_id = tissue["tissue"]
         half_time = tissue["half_time"]
         k = math.log(2) / half_time
-        P_old = tissue_state[tissue_id]
-        P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * dt_min)
-        tissue_state[tissue_id] = P_new
+        p_old = tissue_state[tissue_id]
+        p_new = inert_gas_pressure + (p_old - inert_gas_pressure) * math.exp(-k * dt_min)
+        tissue_state[tissue_id] = p_new
 
 
-def padi_ndl_lookup():
+@app.route('/api/v1/padi_ndl_lookup', methods=['GET'])
+def padi_ndl_lookup_endpoint():
+    """
+    Lookup the residual no-decompression limit (NDL) using the PADI Recreational Dive Planner.
+    ---
+    tags:
+      - NDL Calculation
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Returns the residual NDL in minutes based on the current depth and time at depth.
+        schema:
+          type: object
+          properties:
+            residual_ndl:
+              type: number
+              description: The residual no-decompression limit (NDL) in minutes.
+              example: 30.5
+    """
+    result = _padi_ndl_lookup()
+    return jsonify({"residual_ndl": result})
+
+
+def _padi_ndl_lookup():
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
+    global ndl_max
     """
     Calculate the residual no-decompression limit (NDL) based on the PADI Recreational Dive Planner.
 
@@ -163,6 +283,99 @@ def padi_ndl_lookup():
     return round(residual_ndl, 2)
 
 
+@app.route('/api/v1/log_dive', methods=['POST'])
+def log_dive_endpoint():
+    """
+    Log a dive event.
+    ---
+    tags:
+      - Dive Logs
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: Dive event parameters.
+        required: true
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: Current dive depth in meters.
+              example: 30
+            pressure:
+              type: number
+              description: Ambient pressure in ATA.
+              example: 4.0
+            o2_toxicity:
+              type: number
+              description: Calculated oxygen toxicity.
+              example: 0.84
+            ndl:
+              type: number
+              description: No-decompression limit in minutes.
+              example: 35.0
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor.
+              example: 1.0
+            time_elapsed:
+              type: number
+              description: Total dive time in seconds.
+              example: 600
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 120
+    responses:
+      200:
+        description: Dive event logged successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Dive event logged successfully."
+      400:
+        description: Missing or invalid input data.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing JSON data"
+      500:
+        description: Internal server error.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Internal server error"
+            message:
+              type: string
+              example: "Detailed error message"
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON data"}), 400
+
+    try:
+        depth = float(data.get("depth"))
+        pressure = float(data.get("pressure"))
+        o2_toxicity = float(data.get("o2_toxicity"))
+        ndl = float(data.get("ndl"))
+        rgbm_factor = float(data.get("rgbm_factor"))
+        time_elapsed = float(data.get("time_elapsed"))
+        time_at_depth = float(data.get("time_at_depth"))
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": "Invalid input", "message": str(e)}), 400
+
+    log_dive(depth, pressure, o2_toxicity, ndl, rgbm_factor, time_elapsed, time_at_depth)
+    return jsonify({"message": "Dive event logged successfully."})
+
+
 def log_dive(depth, pressure, o2_toxicity, ndl, rgbm_factor, time_elapsed, time_at_depth):
     """
     A simple hello endpoint.
@@ -189,13 +402,137 @@ def log_dive(depth, pressure, o2_toxicity, ndl, rgbm_factor, time_elapsed, time_
     dive_log.append(entry)
 
 
+@app.route('/api/v1/get_log_filename', methods=['GET'])
+def get_log_filename_endpoint():
+    """
+    Retrieve the log filename for a given client.
+    ---
+    tags:
+      - Dive Logs
+    produces:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client whose log filename is requested.
+    responses:
+      200:
+        description: Returns the path to the client's dive log file.
+        schema:
+          type: object
+          properties:
+            log_filename:
+              type: string
+              description: The file path for the client's dive log.
+              example: "static/logs/dive_log_12345.json"
+      400:
+        description: Missing Client-UUID header.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing Client-UUID header"
+    """
+    client_uuid = request.headers.get("Client-UUID")
+    if not client_uuid:
+        return jsonify({"error": "Missing Client-UUID header"}), 400
+
+    filename = get_log_filename(client_uuid)
+    return jsonify({"log_filename": filename})
+
+
 def get_log_filename(client_uuid):
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
     log_dir = "static/logs"
     os.makedirs(log_dir, exist_ok=True)
     return os.path.join(log_dir, f"dive_log_{client_uuid}.json")
 
 
+@app.route('/api/v1/ensure_log_file', methods=['POST'])
+def ensure_log_file_endpoint():
+    """
+    Ensure that the dive log file for a client exists and is valid.
+    ---
+    tags:
+      - Dive Logs
+    consumes:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client whose log file should be ensured.
+    responses:
+      200:
+        description: Log file exists and is valid (or was reset if corrupted).
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: Confirmation message.
+              example: "Log file ensured successfully."
+      400:
+        description: Missing Client-UUID header.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing Client-UUID header"
+      500:
+        description: Internal server error.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Internal server error"
+            message:
+              type: string
+              example: "Detailed error message"
+    """
+    client_uuid = request.headers.get("Client-UUID")
+    if not client_uuid:
+        return jsonify({"error": "Missing Client-UUID header"}), 400
+
+    try:
+        ensure_log_file(client_uuid)
+        return jsonify({"message": "Log file ensured successfully."})
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
 def ensure_log_file(client_uuid):
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
     log_file = get_log_filename(client_uuid)
     if not os.path.exists(log_file):
         with open(log_file, "w") as file:
@@ -209,7 +546,84 @@ def ensure_log_file(client_uuid):
                 json.dump([], file)
 
 
+@app.route('/api/v1/load_dive_logs', methods=['GET'])
+def load_dive_logs_endpoint():
+    """
+    Load dive logs for a given client.
+    ---
+    tags:
+      - Dive Logs
+    produces:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client whose dive logs are to be loaded.
+    responses:
+      200:
+        description: A JSON array of dive log entries.
+        schema:
+          type: array
+          items:
+            type: object
+            # Optionally, you can define the dive log properties here.
+            # For example:
+            # properties:
+            #   timestamp:
+            #     type: string
+            #     description: Time when the log entry was recorded.
+            #     example: "2025-03-11 14:30:00"
+            #   depth:
+            #     type: number
+            #     description: Depth in meters.
+            #     example: 30
+      400:
+        description: Missing Client-UUID header.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing Client-UUID"
+      500:
+        description: Error loading dive logs.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Internal server error"
+            message:
+              type: string
+              example: "Detailed error message"
+    """
+    client_uuid = request.headers.get("Client-UUID")
+    if not client_uuid:
+        return jsonify({"error": "Missing Client-UUID"}), 400
+
+    try:
+        logs = load_dive_logs(client_uuid)
+        return jsonify(logs)
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
 def load_dive_logs(client_uuid):
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
     log_file = get_log_filename(client_uuid)
     if not os.path.exists(log_file):
         ensure_log_file(client_uuid)
@@ -222,7 +636,112 @@ def load_dive_logs(client_uuid):
         return []
 
 
+@app.route('/api/v1/save_dive_log', methods=['POST'])
+def save_dive_log_endpoint():
+    """
+    Save a dive log entry for a specified client.
+    ---
+    tags:
+      - Dive Logs
+    consumes:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client.
+      - in: body
+        name: body
+        description: Dive log entry details.
+        required: true
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: Current dive depth in meters.
+              example: 30
+            pressure:
+              type: number
+              description: Ambient pressure in ATA.
+              example: 4.0
+            oxygen_toxicity:
+              type: number
+              description: Calculated oxygen toxicity.
+              example: 0.84
+            ndl:
+              type: number
+              description: No-decompression limit in minutes.
+              example: 35.0
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor.
+              example: 1.0
+            total_time:
+              type: number
+              description: Total dive time in seconds.
+              example: 600
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 120
+            # Additional fields can be added here as needed.
+    responses:
+      200:
+        description: Dive log saved successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Dive log saved successfully."
+      400:
+        description: Missing or invalid input.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing Client-UUID header"
+      500:
+        description: Internal server error.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Internal server error"
+            message:
+              type: string
+              example: "Detailed error message"
+    """
+    client_uuid = request.headers.get("Client-UUID")
+    if not client_uuid:
+        return jsonify({"error": "Missing Client-UUID header"}), 400
+
+    entry = request.get_json()
+    if not entry:
+        return jsonify({"error": "Missing JSON data"}), 400
+
+    save_dive_log(client_uuid, entry)
+    return jsonify({"message": "Dive log saved successfully."})
+
+
 def save_dive_log(client_uuid, entry):
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
     log_file = get_log_filename(client_uuid)
     logs = load_dive_logs(client_uuid)
 
@@ -268,6 +787,30 @@ state = {
 }
 
 
+@app.route('/api/v1/calculate_rgbm', methods=['GET'])
+def calculate_rgbm_endpoint():
+    """
+    Calculate the RGBM factor using the current dive state.
+    ---
+    tags:
+      - NDL Calculation
+    produces:
+      - application/json
+    responses:
+      200:
+        description: The calculated RGBM factor based on the current dive state.
+        schema:
+          type: object
+          properties:
+            rgbm_factor:
+              type: number
+              description: The RGBM factor, adjusted based on depth, time at depth, and gas mix.
+              example: 1.23456
+    """
+    factor = calculate_rgbm()
+    return jsonify({"rgbm_factor": factor})
+
+
 def calculate_rgbm():
     """
     Calculate the RGBM factor with higher precision, using the global `state` structure.
@@ -295,207 +838,30 @@ def calculate_rgbm():
     return state["rgbm_factor"]
 
 
-# def calculate_accumulated_ndl():
-#     """
-#     Calculate the accumulated NDL using the Bühlmann decompression model equations.
-#
-#     For each tissue compartment, the tissue tension is updated using:
-#         P(t) = P_A + (P(0) - P_A) * exp(-k*t)
-#     where k = ln(2)/half_time and P_A is the ambient pressure at the compartment's depth.
-#
-#     When the tissue compartment includes Bühlmann coefficients (a and b), the maximum allowed
-#     tissue tension is:
-#         P_max = (P_A - a) / b
-#     and the additional time Δt allowed is obtained by solving:
-#         P_A - (P_A - P_current) * exp(-k*Δt) = P_max,
-#     which yields:
-#         Δt = -1/k * ln((P_A - P_max) / (P_A - P_current))
-#
-#     Negative Δt values indicate that the tissue is already over its limit.
-#     If a and b are not provided, a simplified approach using an M-value is used.
-#     """
-#     # Initialize tissue gas tensions for each compartment (starting at 0)
-#     tissue_tensions = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
-#     surface_pressure = 1.0
-#
-#     # Process each dive log entry sequentially.
-#     for entry in dive_log:
-#         # Support both "depth" and "Depth", similarly for time at depth.
-#         d = float(entry.get("depth", entry.get("Depth", 0)))
-#         t_sec = float(entry.get("time_at_depth", entry.get("Time at Depth", 0)))
-#         t_min = t_sec / 60.0  # Convert seconds to minutes
-#
-#         # Calculate ambient pressure at the segment's depth.
-#         pressure_at_depth = surface_pressure + (d / 10)
-#         inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) +
-#                                                     state.get("helium_fraction", 0.0))
-#         # Update each tissue compartment tension using exponential uptake:
-#         for tissue in buhlmann_tissues:
-#             tissue_id = tissue["tissue"]
-#             half_time = tissue["half_time"]
-#             k = math.log(2) / half_time
-#             P_old = tissue_tensions[tissue_id]
-#             # Equation: P(t) = P_A + (P(0) - P_A) * exp(-k*t)
-#             P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * t_min)
-#             tissue_tensions[tissue_id] = P_new
-#
-#     # Calculate the additional time (NDL) allowed at the current depth for each tissue.
-#     current_depth = state["depth"]
-#     ambient_pressure = surface_pressure + (current_depth / 10)
-#     ndl_values = []
-#     for tissue in buhlmann_tissues:
-#         tissue_id = tissue["tissue"]
-#         half_time = tissue["half_time"]
-#         k = math.log(2) / half_time
-#         current_tension = tissue_tensions[tissue_id]
-#         # If Bühlmann coefficients are provided, use them.
-#         a = tissue.get("a")
-#         b = tissue.get("b")
-#         if a is not None and b is not None:
-#             # Maximum allowable tissue tension according to Bühlmann:
-#             P_max = (ambient_pressure - a) / b
-#             numerator = ambient_pressure - P_max
-#             denominator = ambient_pressure - current_tension
-#             if denominator == 0:
-#                 ndl = 0
-#             else:
-#                 try:
-#                     ratio = numerator / denominator
-#                     ndl = -1 / k * math.log(ratio)
-#                 except Exception:
-#                     ndl = 0
-#         else:
-#             # Fallback: use the simplified M-value method.
-#             max_tension = tissue.get("M-value", 1.0) * surface_pressure
-#             numerator = ambient_pressure - max_tension
-#             denominator = ambient_pressure - current_tension
-#             if denominator == 0:
-#                 ndl = 0
-#             else:
-#                 try:
-#                     ratio = numerator / denominator
-#                     ndl = -1 / k * math.log(ratio)
-#                 except Exception:
-#                     ndl = 0
-#         ndl_values.append(ndl)
-#
-#     # Combine negative NDL values if any exist, otherwise use the smallest positive value.
-#     negatives = [ndl for ndl in ndl_values if ndl < 0]
-#     if negatives:
-#         accumulated_ndl = sum(negatives)
-#     else:
-#         accumulated_ndl = min(ndl_values) if ndl_values else 0
-#     return round(accumulated_ndl, 2)
-# def calculate_accumulated_ndl():
-#     """
-#     Calculate the accumulated NDL using either the Bühlmann decompression model equations
-#     or the PADI Recreational Dive Planner table, depending on a flag in the state.
-#
-#     For each tissue compartment, the tissue tension is updated using:
-#         P(t2) = P_A + (P(t1) - P_A) * exp(-k*(t2-t1))
-#     where k = ln(2)/half_time and P_A is the ambient pressure at the compartment's depth.
-#
-#     When the tissue compartment includes Bühlmann coefficients (a and b), the maximum allowed
-#     tissue tension is:
-#         P_max = (P_A - a) / b
-#     and the additional time Δt allowed is obtained by solving:
-#         P_A - (P_A - P_current) * exp(-k*Δt) = P_max,
-#     which yields:
-#         Δt = -1/k * ln((P_A - P_max) / (P_A - P_current))
-#
-#     Negative Δt values indicate that the tissue is already over its limit.
-#     If state["use_padi_ndl"] is True, the PADI table-based residual NDL is returned.
-#     """
-#     # Use the PADI Recreational Dive Planner method if indicated.
-#     if state.get("use_padi_ndl", False):
-#         return padi_ndl_lookup()
-#
-#     # Ensure we have some log entries.
-#     if not dive_log:
-#         return 0
-#
-#     # Initialize tissue gas tensions for each compartment (starting at 0)
-#     tissue_tensions = {tissue["tissue"]: 0.0 for tissue in buhlmann_tissues}
-#     surface_pressure = 1.0
-#
-#     # Sort the dive log by cumulative time at depth.
-#     sorted_log = sorted(dive_log, key=lambda e: float(e.get("time_at_depth", e.get("Time at Depth", 0))))
-#     previous_time = 0.0
-#
-#     for entry in sorted_log:
-#         # Extract current cumulative time (in seconds)
-#         current_time = float(entry.get("time_at_depth", entry.get("Time at Depth", 0)))
-#         dt = (current_time - previous_time) / 60.0  # convert difference to minutes
-#         previous_time = current_time
-#         if dt <= 0:
-#             continue  # Skip if no time has elapsed
-#
-#         # Get the depth for this log entry
-#         d = float(entry.get("depth", entry.get("Depth", 0)))
-#         # Ambient pressure at this segment (assuming 1 atm at surface and 1 atm per 10m)
-#         pressure_at_depth = surface_pressure + (d / 10)
-#         inert_gas_pressure = pressure_at_depth * (state.get("nitrogen_fraction", 0.79) +
-#                                                   state.get("helium_fraction", 0.0))
-#         # Update each tissue compartment using the time increment dt:
-#         for tissue in buhlmann_tissues:
-#             tissue_id = tissue["tissue"]
-#             half_time = tissue["half_time"]
-#             k = math.log(2) / half_time
-#             P_old = tissue_tensions[tissue_id]
-#             # Update using: P(t+dt) = P_A + (P(t) - P_A) * exp(-k * dt)
-#             P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * dt)
-#             tissue_tensions[tissue_id] = P_new
-#
-#     # Now, using the final tissue tensions, compute the allowed additional time (NDL)
-#     current_depth = state["depth"]
-#     ambient_pressure = surface_pressure + (current_depth / 10)
-#     ndl_values = []
-#
-#     for tissue in buhlmann_tissues:
-#         tissue_id = tissue["tissue"]
-#         half_time = tissue["half_time"]
-#         k = math.log(2) / half_time
-#         current_tension = tissue_tensions[tissue_id]
-#         # If Bühlmann coefficients are provided, use them.
-#         a = tissue.get("a")
-#         b = tissue.get("b")
-#         if a is not None and b is not None:
-#             # Maximum allowable tissue tension per Bühlmann:
-#             P_max = (ambient_pressure - a) / b
-#             numerator = ambient_pressure - P_max
-#             denominator = ambient_pressure - current_tension
-#             if denominator <= 0:
-#                 ndl = 0
-#             else:
-#                 try:
-#                     ratio = numerator / denominator
-#                     ndl = -1 / k * math.log(ratio)
-#                 except Exception:
-#                     ndl = 0
-#         else:
-#             # Fallback: use the M-value method.
-#             max_tension = tissue.get("M-value", 1.0) * surface_pressure
-#             numerator = ambient_pressure - max_tension
-#             denominator = ambient_pressure - current_tension
-#             if denominator <= 0:
-#                 ndl = 0
-#             else:
-#                 try:
-#                     ratio = numerator / denominator
-#                     ndl = -1 / k * math.log(ratio)
-#                 except Exception:
-#                     ndl = 0
-#         ndl_values.append(ndl)
-#
-#     # If any tissues are over their limits (negative NDL), sum these values;
-#     # otherwise, use the most restrictive (minimum) positive value.
-#     negatives = [ndl for ndl in ndl_values if ndl < 0]
-#     if negatives:
-#         accumulated_ndl = sum(negatives)
-#     else:
-#         accumulated_ndl = min(ndl_values) if ndl_values else 0
-#
-#     return round(accumulated_ndl, 2)
+@app.route('/api/v1/calculate_accumulated_ndl', methods=['GET'])
+def calculate_accumulated_ndl_endpoint():
+    """
+    Calculate the accumulated no-decompression limit (NDL) based on the dive log and current state.
+    ---
+    tags:
+      - NDL Calculation
+    produces:
+      - application/json
+    responses:
+      200:
+        description: The accumulated NDL value, calculated using either the Bühlmann decompression model equations or the PADI Recreational Dive Planner method, optionally adjusted by the RGBM factor.
+        schema:
+          type: object
+          properties:
+            accumulated_ndl:
+              type: number
+              description: The accumulated no-decompression limit in minutes.
+              example: 35.0
+    """
+    ndl_result = calculate_accumulated_ndl()
+    return jsonify({"accumulated_ndl": ndl_result})
+
+
 def calculate_accumulated_ndl():
     """
     Calculate the accumulated NDL using either the Bühlmann decompression model equations
@@ -507,11 +873,11 @@ def calculate_accumulated_ndl():
 
     When the tissue compartment includes Bühlmann coefficients (a and b), the maximum allowed
     tissue tension is:
-        P_max = (P_A - a) / b
+        p_max = (P_A - a) / b
     and the additional time Δt allowed is obtained by solving:
-        P_A - (P_A - P_current)*exp(-k*Δt) = P_max,
+        P_A - (P_A - P_current)*exp(-k*Δt) = p_max,
     which yields:
-        Δt = -1/k * ln((P_A - P_max) / (P_A - P_current))
+        Δt = -1/k * ln((P_A - p_max) / (P_A - P_current))
 
     Negative Δt values indicate that the tissue is already over its limit.
     If state["use_padi_ndl"] is True, the PADI table-based residual NDL is returned.
@@ -520,7 +886,7 @@ def calculate_accumulated_ndl():
     """
     # Use the PADI Recreational Dive Planner method if indicated.
     if state.get("use_padi_ndl", False):
-        ndl_result = padi_ndl_lookup()
+        ndl_result = _padi_ndl_lookup()
     else:
         # Ensure we have some log entries.
         if not dive_log:
@@ -553,10 +919,10 @@ def calculate_accumulated_ndl():
                     tissue_id = tissue["tissue"]
                     half_time = tissue["half_time"]
                     k = math.log(2) / half_time
-                    P_old = tissue_tensions[tissue_id]
+                    p_old = tissue_tensions[tissue_id]
                     # Equation: P(t+dt) = P_A + (P(t) - P_A)*exp(-k*dt)
-                    P_new = inert_gas_pressure + (P_old - inert_gas_pressure) * math.exp(-k * dt)
-                    tissue_tensions[tissue_id] = P_new
+                    p_new = inert_gas_pressure + (p_old - inert_gas_pressure) * math.exp(-k * dt)
+                    tissue_tensions[tissue_id] = p_new
 
             # Now, using the final tissue tensions, compute the allowed additional time (NDL)
             current_depth = state["depth"]
@@ -573,8 +939,8 @@ def calculate_accumulated_ndl():
                 b = tissue.get("b")
                 if a is not None and b is not None:
                     # Maximum allowable tissue tension according to Bühlmann:
-                    P_max = (ambient_pressure - a) / b
-                    numerator = ambient_pressure - P_max
+                    p_max = (ambient_pressure - a) / b
+                    numerator = ambient_pressure - p_max
                     denominator = ambient_pressure - current_tension
                     if denominator <= 0:
                         ndl = 0
@@ -615,14 +981,88 @@ def calculate_accumulated_ndl():
     return round(ndl_result, 2)
 
 
-@app.route('/toggle-padi-ndl', methods=['POST'])
+@app.route('/api/v1/toggle-padi-ndl', methods=['POST'])
 def toggle_padi_ndl():
+    """
+    Toggle PADI NDL table lookup.
+    ---
+    tags:
+      - NDL Calculation
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: JSON payload to toggle the use of the PADI NDL table lookup.
+        required: true
+        schema:
+          type: object
+          properties:
+            use_padi_ndl:
+              type: boolean
+              description: Set to true to enable PADI NDL lookup, or false to disable.
+              example: true
+    responses:
+      200:
+        description: PADI NDL lookup toggled successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              description: A message indicating the current state of the PADI NDL lookup.
+              example: "PADI tables lookup enabled"
+            use_padi_ndl:
+              type: boolean
+              description: The current state of the PADI NDL lookup flag.
+              example: true
+    """
     data = request.get_json()
     # Update the global state flag for using PADI table lookup
     state["use_padi_ndl"] = data.get("use_padi_ndl", False)
     message = f"PADI tables lookup {'enabled' if state['use_padi_ndl'] else 'disabled'}"
     print(message)
     return jsonify({"message": message, "use_padi_ndl": state["use_padi_ndl"]})
+
+
+@app.route('/api/v1/update_time_at_depth', methods=['GET'])
+def update_time_at_depth_endpoint():
+    """
+    Update dive time and recalculate time at depth and RGBM factor.
+    ---
+    tags:
+      - Dive State
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Dive time and RGBM factor updated successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Dive time and RGBM factor updated successfully.
+            time_elapsed:
+              type: number
+              description: The updated total dive time in seconds.
+              example: 300.0
+            time_at_depth:
+              type: number
+              description: The updated time spent at the current depth in seconds.
+              example: 60.0
+            rgbm_factor:
+              type: number
+              description: The recalculated RGBM factor.
+              example: 1.05
+    """
+    update_time_at_depth()
+    return jsonify({
+        "message": "Dive time and RGBM factor updated successfully.",
+        "time_elapsed": state["time_elapsed"],
+        "time_at_depth": state["time_at_depth"],
+        "rgbm_factor": state["rgbm_factor"]
+    })
 
 
 def update_time_at_depth():
@@ -653,8 +1093,106 @@ def update_time_at_depth():
     state["last_depth"] = state["depth"]
 
 
-@app.route('/calculate_ndl_stops', methods=['POST'])
+@app.route('/api/v1/calculate_ndl_stops', methods=['POST'])
 def calculate_ndl_stops():
+    """
+    Calculate decompression stops based on dive parameters.
+    ---
+    tags:
+      - Decompression
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: Dive parameters required to calculate decompression stops.
+        required: true
+        schema:
+          type: object
+          properties:
+            ndl:
+              type: number
+              description: No-decompression limit in minutes.
+              example: -5.0
+            depth:
+              type: number
+              description: Current depth in meters.
+              example: 30
+            pressure:
+              type: number
+              description: Ambient pressure in ATA.
+              example: 4.0
+            oxygen_toxicity:
+              type: number
+              description: Calculated oxygen toxicity.
+              example: 0.84
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor applied to NDL calculation.
+              example: 1.0
+            time_elapsed:
+              type: number
+              description: Total elapsed dive time in seconds.
+              example: 600
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 120
+            oxygen_fraction:
+              type: number
+              description: (Optional) Fraction of oxygen in the breathing gas.
+              example: 0.21
+            nitrogen_fraction:
+              type: number
+              description: (Optional) Fraction of nitrogen in the breathing gas.
+              example: 0.79
+            helium_fraction:
+              type: number
+              description: (Optional) Fraction of helium in the breathing gas.
+              example: 0.0
+    responses:
+      200:
+        description: A list of decompression stops with depth, duration, and reason.
+        schema:
+          type: object
+          properties:
+            stops:
+              type: array
+              items:
+                type: object
+                properties:
+                  depth:
+                    type: number
+                    description: The depth of the decompression stop in meters.
+                    example: 20
+                  duration:
+                    type: number
+                    description: The duration of the decompression stop in minutes.
+                    example: 10
+                  reason:
+                    type: string
+                    description: The reason for the decompression stop.
+                    example: "NDL exceeded"
+      400:
+        description: Missing or invalid input parameters.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing keys: ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed, time_at_depth"
+      500:
+        description: Internal server error.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Internal server error"
+            message:
+              type: string
+              example: "Detailed error message"
+    """
     try:
         data = request.get_json()
         if not data:
@@ -678,7 +1216,8 @@ def calculate_ndl_stops():
         helium_fraction = float(data.get("helium_fraction", state.get("helium_fraction", 0.0)))
 
         print(f"📩 Received: NDL={ndl}, Depth={depth}, Pressure={pressure}, O₂ Toxicity={oxygen_toxicity}, "
-              f"RGBM={rgbm_factor}, Time Elapsed={time_elapsed}, Time at Depth={time_at_depth}, O2={oxygen_fraction}, N₂={nitrogen_fraction}, He={helium_fraction}")
+              f"RGBM={rgbm_factor}, Time Elapsed={time_elapsed}, Time at Depth={time_at_depth}, "
+              f"O2={oxygen_fraction}, N₂={nitrogen_fraction}, He={helium_fraction}")
 
         stops = generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed,
                                              time_at_depth)
@@ -690,7 +1229,114 @@ def calculate_ndl_stops():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
+@app.route('/api/v1/decompression_stops', methods=['POST'])
+def get_decompression_stops():
+    """
+    Generate decompression stops based on dive parameters.
+    ---
+    tags:
+      - Decompression
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: Dive parameters required to generate decompression stops.
+        required: true
+        schema:
+          type: object
+          properties:
+            ndl:
+              type: number
+              description: No-decompression limit in minutes.
+              example: -5.0
+            depth:
+              type: number
+              description: Current depth in meters.
+              example: 30
+            pressure:
+              type: number
+              description: Ambient pressure in ATA.
+              example: 4.0
+            oxygen_toxicity:
+              type: number
+              description: Calculated oxygen toxicity based on the current gas mix and pressure.
+              example: 0.84
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor applied in NDL calculation.
+              example: 1.0
+            time_elapsed:
+              type: number
+              description: Total elapsed dive time in seconds.
+              example: 600
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 120
+    responses:
+      200:
+        description: A list of decompression stops with their depth, duration, and reason.
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              depth:
+                type: number
+                description: The depth at which a decompression stop is required.
+                example: 20
+              duration:
+                type: number
+                description: The duration in minutes of the decompression stop.
+                example: 10
+              reason:
+                type: string
+                description: The reason for the decompression stop.
+                example: "NDL exceeded"
+      400:
+        description: Invalid or missing input parameters.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing or invalid JSON data"
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON data"}), 400
+
+    try:
+        ndl = float(data.get("ndl"))
+        depth = float(data.get("depth"))
+        pressure = float(data.get("pressure"))
+        oxygen_toxicity = float(data.get("oxygen_toxicity"))
+        rgbm_factor = float(data.get("rgbm_factor"))
+        time_elapsed = float(data.get("time_elapsed"))
+        time_at_depth = float(data.get("time_at_depth"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid input. Ensure all parameters are numeric."}), 400
+
+    stops = generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed,
+                                         time_at_depth)
+    return jsonify(stops)
+
+
 def generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_factor, time_elapsed, time_at_depth):
+    """
+    Example endpoint returning a message.
+    ---
+    responses:
+      200:
+        description: A successful response
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Hello, world!
+    """
     """Generate decompression stops based on dive parameters."""
     stops = []
     if ndl <= 0:
@@ -720,6 +1366,100 @@ def generate_decompression_stops(ndl, depth, pressure, oxygen_toxicity, rgbm_fac
     return stops
 
 
+@app.route('/api/v1/current_state', methods=['GET'])
+def get_current_state_endpoint():
+    """
+    Retrieve the current dive state.
+    ---
+    tags:
+      - Dive State
+    produces:
+      - application/json
+    responses:
+      200:
+        description: The current state of the dive, including depth, time, pressures, gas mix, and computed NDL.
+        schema:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              description: The current timestamp.
+              example: "2025-03-11 14:30:00"
+            depth:
+              type: integer
+              description: Current dive depth in meters.
+              example: 30
+            last_depth:
+              type: integer
+              description: Last recorded dive depth in meters.
+              example: 20
+            time_elapsed:
+              type: number
+              description: Total elapsed dive time in seconds.
+              example: 600
+            total_time:
+              type: number
+              description: Total dive time in seconds.
+              example: 600
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 120
+            depth_start_time:
+              type: number
+              description: Epoch time when the current depth was reached.
+              example: 1616580000.0
+            depth_durations:
+              type: object
+              description: A mapping of depths (in meters) to the duration spent at each depth (in seconds).
+              additionalProperties:
+                type: number
+              example: {"30": 120, "20": 180}
+            ndl:
+              type: number
+              description: Calculated no-decompression limit (NDL) in minutes.
+              example: 35.0
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor used in NDL calculation.
+              example: 1.0
+            pressure:
+              type: number
+              description: Ambient pressure in ATA at the current depth.
+              example: 4.0
+            oxygen_toxicity:
+              type: number
+              description: Computed oxygen toxicity based on the current gas mix and pressure.
+              example: 0.84
+            oxygen_fraction:
+              type: number
+              description: Fraction of oxygen in the breathing gas.
+              example: 0.21
+            nitrogen_fraction:
+              type: number
+              description: Fraction of nitrogen in the breathing gas.
+              example: 0.79
+            helium_fraction:
+              type: number
+              description: Fraction of helium in the breathing gas.
+              example: 0.0
+            selected_deco_model:
+              type: string
+              description: The selected decompression model.
+              example: "bühlmann"
+            use_rgbm_for_ndl:
+              type: boolean
+              description: Flag indicating if RGBM-based NDL calculation is enabled.
+              example: false
+            dive_start_time:
+              type: number
+              description: Epoch time when the dive started.
+              example: 1616580000.0
+    """
+    current_state = get_current_state()
+    return jsonify(current_state)
+
+
 def get_current_state():
     """
     Returns the current state as a dictionary.
@@ -735,7 +1475,7 @@ def get_current_state():
         "time_at_depth": state["time_at_depth"],
         "depth_start_time": state["depth_start_time"],
         "depth_durations": dict(state["depth_durations"]),
-        "ndl": calculate_ndl(state["depth"], state["time_at_depth"] / 60),
+        "ndl": _calculate_ndl(state["depth"], state["time_at_depth"] / 60),
         "rgbm_factor": state["rgbm_factor"],
         "pressure": state["pressure"],
         "oxygen_toxicity": state["oxygen_toxicity"],
@@ -748,8 +1488,61 @@ def get_current_state():
     }
 
 
-@app.route('/dive', methods=['POST'])
+@app.route('/api/v1/dive', methods=['POST'])
 def dive():
+    """
+    Log a dive event by capturing the current state and updating it for the next depth increment.
+    ---
+    tags:
+      - Dive Operations
+    produces:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client performing the dive.
+    responses:
+      200:
+        description: Updated dive state after logging the dive event.
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: Current depth in meters after the dive event.
+              example: 40
+            last_depth:
+              type: number
+              description: The depth before the latest dive update.
+              example: 30
+            pressure:
+              type: number
+              description: Ambient pressure in ATA.
+              example: 5.0
+            oxygen_toxicity:
+              type: number
+              description: Calculated oxygen toxicity based on the current gas mix and pressure.
+              example: 1.05
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 600
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor applied to the NDL calculation.
+              example: 1.2
+            # Additional state fields can be added here as needed.
+      400:
+        description: Missing Client-UUID header.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Missing Client-UUID
+    """
     client_uuid = request.headers.get("Client-UUID")
     if not client_uuid:
         return jsonify({"error": "Missing Client-UUID"}), 400
@@ -781,121 +1574,65 @@ def dive():
     return jsonify(state)
 
 
-# def dive():
-#     client_uuid = request.headers.get("Client-UUID")
-#     if not client_uuid:
-#         return jsonify({"error": "Missing Client-UUID"}), 400
-#
-#     if 0 <= state["depth"] < 350:
-#         # Update time at current depth and capture it
-#         update_time_at_depth()
-#         current_time_at_depth = state["time_at_depth"]
-#
-#         # Build the log entry using the current depth's time_at_depth
-#         log_entry = {
-#             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-#             "depth": int(state["depth"]),  # Adjusted depth for logging
-#             "last_depth": int(state["last_depth"]),  # Adjusted last depth for logging
-#             "time_elapsed": state["time_elapsed"],
-#             "total_time": state["time_elapsed"],
-#             "time_at_depth": current_time_at_depth,  # Use the captured value
-#             "depth_start_time": state["depth_start_time"],
-#             "depth_durations": dict(state["depth_durations"]),
-#             "ndl": calculate_ndl(state["depth"], state["time_at_depth"] / 60),
-#             "rgbm_factor": state["rgbm_factor"],
-#             "pressure": state["pressure"],
-#             "oxygen_toxicity": state["oxygen_toxicity"],
-#             "oxygen_fraction": state["oxygen_fraction"],
-#             "nitrogen_fraction": state["nitrogen_fraction"],
-#             "helium_fraction": state["helium_fraction"],
-#             "selected_deco_model": state["selected_deco_model"],
-#             "use_rgbm_for_ndl": state["use_rgbm_for_ndl"],
-#             "dive_start_time": state["dive_start_time"]
-#         }
-#
-#         get_state()
-#
-#         print("📝 Log Entry:")
-#         for key, value in log_entry.items():
-#             print(f"{key}: {value}")
-#
-#         save_dive_log(client_uuid, log_entry)
-#
-#         # Now update for the next depth:
-#         state["last_depth"] = state["depth"]
-#         state["depth"] += 10
-#         state["depth_start_time"] = time.time()
-#         # Optionally, reset time_at_depth for the new depth if needed:
-#         state["time_at_depth"] = state["depth_durations"][state["depth"]]
-#
-#     return jsonify(state)
-
-# def dive():
-#     client_uuid = request.headers.get("Client-UUID")
-#     if not client_uuid:
-#         return jsonify({"error": "Missing Client-UUID"}), 400
-#
-#     if 0 <= state["depth"] < 350:
-#         # Update the time at the current depth
-#         update_time_at_depth()
-#
-#         # Save the current depth as last_depth before modifying
-#         state["last_depth"] = state["depth"]
-#
-#         # Increase depth and reset depth start time for the new depth
-#         state["depth"] += 10
-#         state["depth_start_time"] = time.time()
-#
-#         # Capture the time_at_depth from the new depth (if already present)
-#         state["time_at_depth"] = state["depth_durations"][state["depth"]]
-#
-#         # Calculate NDL (using time conversion from seconds to minutes)
-#         state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
-#         state["pressure"] = round(1 + (state["depth"] / 10), 2)
-#         state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"], 2)
-#         state["rgbm_factor"] = calculate_rgbm()
-#
-#         # Build the log entry.
-#         # For display purposes, subtract 10 from depth values (converted to int)
-#         log_entry = {
-#             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-#             "depth": int(state["depth"]) - 10,  # Adjusted depth for logging
-#             "last_depth": int(state["last_depth"]) - 10,  # Adjusted last depth for logging
-#             "time_elapsed": state["time_elapsed"],
-#             "total_time": state["time_elapsed"],  # Total dive time
-#             "time_at_depth": state["time_at_depth"],
-#             "depth_start_time": state["depth_start_time"],
-#             "depth_durations": dict(state["depth_durations"]),
-#             "ndl": state["ndl"],
-#             "rgbm_factor": state["rgbm_factor"],
-#             "pressure": state["pressure"],
-#             "oxygen_toxicity": state["oxygen_toxicity"],
-#             "oxygen_fraction": state["oxygen_fraction"],
-#             "nitrogen_fraction": state["nitrogen_fraction"],
-#             "helium_fraction": state["helium_fraction"],
-#             "selected_deco_model": state["selected_deco_model"],
-#             "use_rgbm_for_ndl": state["use_rgbm_for_ndl"],
-#             "dive_start_time": state["dive_start_time"]
-#         }
-#
-#         # Print all fields in the log entry
-#         print("📝 Saved Log Entry:")
-#         for key, value in log_entry.items():
-#             print(f"{key}: {value}")
-#
-#         # Save the log entry to file
-#         save_dive_log(client_uuid, log_entry)
-#
-#         # Prepare for the next depth: update last_depth and increase depth
-#         state["last_depth"] = state["depth"]
-#         state["depth"] += 10
-#         state["depth_start_time"] = time.time()
-#
-#     return jsonify(state)
-
-
-@app.route('/ascend', methods=['POST'])
+@app.route('/api/v1/ascend', methods=['POST'])
 def ascend():
+    """
+    Command the diver to ascend by reducing depth.
+    ---
+    tags:
+      - Dive Control
+    produces:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client initiating the ascend command.
+    responses:
+      200:
+        description: Returns the updated dive state after ascending.
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: The current depth in meters after ascending.
+              example: 20
+            pressure:
+              type: number
+              description: The ambient pressure in ATA at the current depth.
+              example: 3.0
+            oxygen_toxicity:
+              type: number
+              description: The calculated oxygen toxicity based on the current gas mix and pressure.
+              example: 0.63
+            ndl:
+              type: number
+              description: The current no-decompression limit (NDL) in minutes.
+              example: 25.0
+            rgbm_factor:
+              type: number
+              description: The current RGBM factor applied to NDL calculation.
+              example: 1.1
+            time_elapsed:
+              type: number
+              description: Total elapsed dive time in seconds.
+              example: 300
+            time_at_depth:
+              type: number
+              description: Time spent at the current depth in seconds.
+              example: 60
+            # Additional state keys may be added here if needed.
+      400:
+        description: Missing Client-UUID header.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Missing Client-UUID
+    """
     client_uuid = request.headers.get("Client-UUID")
     if not client_uuid:
         return jsonify({"error": "Missing Client-UUID"}), 400
@@ -907,12 +1644,11 @@ def ascend():
         if state["depth"] < 0:
             state["depth"] = 0
         state["depth_start_time"] = time.time()
-        state["time_at_depth"] = state["depth_durations"][state["depth"]]  # No need for .get() with defaultdict
+        state["time_at_depth"] = state["depth_durations"][state["depth"]]  # Using defaultdict, so no .get() needed
 
-        state["ndl"] = calculate_ndl(state["depth"], state["time_at_depth"] / 60)
+        state["ndl"] = _calculate_ndl(state["depth"], state["time_at_depth"] / 60)
         state["pressure"] = round(1 + (state["depth"] / 10), 2)
-        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"],
-                                         2)  # Fixed to use oxygen_fraction
+        state["oxygen_toxicity"] = round(state["oxygen_fraction"] * state["pressure"], 2)
         state["rgbm_factor"] = calculate_rgbm()
 
         log_entry = {
@@ -931,8 +1667,51 @@ def ascend():
     return jsonify(state)
 
 
-@app.route('/logs', methods=['GET'])
+@app.route('/api/v1/logs', methods=['GET'])
 def get_logs():
+    """
+    Retrieve dive logs for a given client.
+    ---
+    tags:
+      - Dive Logs
+    produces:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client whose dive logs are being requested.
+    responses:
+      200:
+        description: A JSON array containing the dive logs.
+        schema:
+          type: array
+          items:
+            type: object
+            # Define properties of a dive log entry if known, for example:
+            # properties:
+            #   timestamp:
+            #     type: string
+            #     description: The time when the log entry was recorded.
+            #     example: "2025-03-11 14:30:00"
+            #   depth:
+            #     type: number
+            #     description: The depth recorded in the dive log.
+            #     example: 30
+            #   pressure:
+            #     type: number
+            #     description: The ambient pressure in ATA.
+            #     example: 4.0
+      400:
+        description: Missing Client-UUID header.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Missing Client-UUID
+    """
     client_uuid = request.headers.get("Client-UUID")
     if not client_uuid:
         return jsonify({"error": "Missing Client-UUID"}), 400
@@ -942,8 +1721,93 @@ def get_logs():
     return jsonify(logs)
 
 
-@app.route('/state', methods=['GET'])
+@app.route('/api/v1/state', methods=['GET'])
 def get_state():
+    """
+    Retrieve the current dive state.
+    ---
+    tags:
+      - Dive State
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Dive state information including current depth, pressure, oxygen toxicity, NDL values, and decompression model settings.
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: Current depth in meters.
+              example: 30
+            pressure:
+              type: number
+              description: Ambient pressure in ATA.
+              example: 4.0
+            oxygen_toxicity:
+              type: number
+              description: Calculated oxygen toxicity based on the current gas mix and depth.
+              example: 0.84
+            oxygen_fraction:
+              type: number
+              description: Fraction of oxygen in the breathing gas.
+              example: 0.21
+            nitrogen_fraction:
+              type: number
+              description: Fraction of nitrogen in the breathing gas.
+              example: 0.79
+            helium_fraction:
+              type: number
+              description: Fraction of helium in the breathing gas.
+              example: 0.0
+            ndl:
+              type: number
+              description: Calculated no-decompression limit (NDL) in minutes.
+              example: 35.0
+            accumulated_ndl:
+              type: number
+              description: Accumulated NDL based on the entire dive log.
+              example: 20.0
+            rgbm_factor:
+              type: number
+              description: Current RGBM factor used in NDL calculation.
+              example: 1.2
+            time_at_depth_minutes:
+              type: number
+              description: Time spent at the current depth in minutes.
+              example: 15.5
+            time_elapsed_minutes:
+              type: number
+              description: Total elapsed dive time in minutes.
+              example: 45.0
+            selected_deco_model:
+              type: string
+              description: The selected decompression model.
+              example: bühlmann
+            use_rgbm_for_ndl:
+              type: boolean
+              description: Indicates whether RGBM-based NDL calculation is enabled.
+              example: true
+            buhlmann_ndl:
+              type: object
+              description: Details of the Bühlmann model calculations.
+              properties:
+                gas_type:
+                  type: string
+                  description: Composition of the breathing gas.
+                  example: "21% O₂, 79% N₂, 0% He"
+                hlf_times:
+                  type: array
+                  items:
+                    type: number
+                  description: List of tissue half-times.
+                  example: [5, 10, 20, 40]
+                compartments:
+                  type: array
+                  items:
+                    type: object
+                  description: Tissue compartments used in the Bühlmann decompression model.
+    """
     # Update time tracking before returning state
     update_time_at_depth()
 
@@ -984,7 +1848,7 @@ def get_state():
         time_at_depth_min = 0.01
 
     # Calculate current NDL based on the current depth and time at that depth
-    ndl_value = calculate_ndl(depth, time_at_depth_min, oxygen_fraction, nitrogen_fraction, helium_fraction)
+    ndl_value = _calculate_ndl(depth, time_at_depth_min, oxygen_fraction, nitrogen_fraction, helium_fraction)
     # Recalculate RGBM factor (if needed)
     state["rgbm_factor"] = calculate_rgbm()
 
@@ -1005,7 +1869,7 @@ def get_state():
         "nitrogen_fraction": nitrogen_fraction,
         "helium_fraction": helium_fraction,
         "ndl": ndl_value,
-        "accumulated_ndl": accumulated_ndl,  # New field for accumulated NDL
+        "accumulated_ndl": accumulated_ndl,
         "rgbm_factor": rgbm_factor,
         "time_at_depth_minutes": time_at_depth_min,
         "time_elapsed_minutes": time_elapsed_min,
@@ -1019,8 +1883,37 @@ def get_state():
     })
 
 
-@app.route('/toggle-rgbm-ndl', methods=['POST'])
+@app.route('/api/v1/toggle-rgbm-ndl', methods=['POST'])
 def toggle_rgbm_ndl():
+    """
+    Toggle RGBM-based NDL calculation.
+    ---
+    tags:
+      - NDL Calculation
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: JSON payload to toggle RGBM-based NDL calculation.
+        required: true
+        schema:
+          type: object
+          properties:
+            use_rgbm:
+              type: boolean
+              description: Set to true to enable RGBM-based NDL calculation; false to disable.
+              example: true
+    responses:
+      200:
+        description: Returns a message indicating whether RGBM-based NDL calculation is enabled or disabled.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: RGBM-based NDL calculation enabled
+    """
     data = request.json
     state["use_rgbm_for_ndl"] = data.get("use_rgbm", False)
     return jsonify({"message": f"RGBM-based NDL calculation {'enabled' if state['use_rgbm_for_ndl'] else 'disabled'}"})
@@ -1028,6 +1921,30 @@ def toggle_rgbm_ndl():
 
 # Global variable for smoothed NDL (initialize to a high value)
 smoothed_ndl = 200
+
+
+@app.route('/api/v1/compute_ndl', methods=['GET'])
+def compute_ndl_endpoint():
+    """
+    Compute the no-decompression limit (NDL) based on the current state.
+    ---
+    tags:
+      - NDL Calculation
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Returns the computed and smoothed NDL value.
+        schema:
+          type: object
+          properties:
+            ndl:
+              type: number
+              description: The computed no-decompression limit in minutes.
+              example: 35.0
+    """
+    ndl = compute_ndl()  # Call your compute_ndl function
+    return jsonify({"ndl": ndl})
 
 
 def compute_ndl():
@@ -1048,8 +1965,8 @@ def compute_ndl():
         a = tissue.get("a")
         b = tissue.get("b")
         if a is not None and b is not None:
-            P_max = (ambient_pressure - a) / b
-            numerator = ambient_pressure - P_max
+            p_max = (ambient_pressure - a) / b
+            numerator = ambient_pressure - p_max
             denominator = ambient_pressure - current_tension
             if denominator <= 0:
                 ndl = 0
@@ -1093,7 +2010,150 @@ def compute_ndl():
     return round(smoothed_ndl, 2)
 
 
-def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_fraction=0.79, helium_fraction=0.0):
+@app.route('/api/v1/calculate_ndl', methods=['POST'])
+@admin_required
+def calculate_ndl_endpoint():
+    """
+    Calculate the no-decompression limit (NDL) for a dive.
+    ---
+    tags:
+      - NDL Calculation
+    consumes:
+      - application/json
+    parameters:
+      - in: header
+        name: X-Admin-Token
+        type: string
+        required: true
+        description: Admin token required to access this endpoint.
+      - in: body
+        name: body
+        description: Dive parameters required to calculate the NDL.
+        required: true
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: Current dive depth in meters.
+              example: 30
+            time_at_depth_minutes:
+              type: number
+              description: Time spent at depth in minutes.
+              example: 20
+            oxygen_fraction:
+              type: number
+              description: Fraction of oxygen in the breathing gas.
+              example: 0.21
+            nitrogen_fraction:
+              type: number
+              description: Fraction of nitrogen in the breathing gas.
+              example: 0.79
+            helium_fraction:
+              type: number
+              description: Fraction of helium in the breathing gas.
+              example: 0.0
+    responses:
+      200:
+        description: The calculated no-decompression limit (NDL) in minutes.
+        schema:
+          type: object
+          properties:
+            ndl:
+              type: number
+              description: The calculated no-decompression limit (NDL) in minutes.
+              example: 35.0
+      400:
+        description: Missing or invalid input.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Missing JSON data"
+      401:
+        description: Unauthorized access.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Unauthorized"
+    """
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON data"}), 400
+
+    try:
+        depth = float(data.get("depth"))
+        time_at_depth_minutes = float(data.get("time_at_depth_minutes"))
+        oxygen_fraction = float(data.get("oxygen_fraction", 0.21))
+        nitrogen_fraction = float(data.get("nitrogen_fraction", 0.79))
+        helium_fraction = float(data.get("helium_fraction", 0.0))
+    except (TypeError, ValueError) as e:
+        return jsonify({"error": "Invalid input", "message": str(e)}), 400
+
+    ndl_value = _calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction, nitrogen_fraction, helium_fraction)
+    return jsonify({"ndl": ndl_value})
+
+
+@app.route('/api/v1/_calculate_ndl', methods=['POST'])
+def _calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_fraction=0.79, helium_fraction=0.0):
+    """
+    Calculate the no-decompression limit (NDL) for a given depth and time at depth.
+    ---
+    tags:
+      - NDL Calculation
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: JSON payload containing the depth (in meters), time at depth (in minutes), and optional gas fractions.
+        required: true
+        schema:
+          type: object
+          properties:
+            depth:
+              type: number
+              description: Depth in meters.
+              example: 30
+            time_at_depth_minutes:
+              type: number
+              description: Time spent at depth in minutes.
+              example: 20
+            oxygen_fraction:
+              type: number
+              description: Oxygen fraction (optional, default is 0.21).
+              example: 0.21
+            nitrogen_fraction:
+              type: number
+              description: Nitrogen fraction (optional, default is 0.79).
+              example: 0.79
+            helium_fraction:
+              type: number
+              description: Helium fraction (optional, default is 0.0).
+              example: 0.0
+    responses:
+      200:
+        description: Calculated NDL value.
+        schema:
+          type: object
+          properties:
+            ndl:
+              type: number
+              description: The no-decompression limit in minutes.
+              example: 35.0
+      400:
+        description: Invalid or missing input data.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Missing JSON data
+    """
     """Calculate NDL using an adapted Bühlmann ZH-L16 model.
        time_at_depth_minutes is expected in minutes.
        Inert gas loading is computed from nitrogen and helium.
@@ -1163,7 +2223,7 @@ def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_f
             ndl /= rgbm_factor  # Adjust NDL using RGBM factor
             ndl = round(ndl, 2)  # Keep precision
 
-    # print(f"✅ Final Computed NDL: {ndl:.2f} minutes (Limited by Tissue {limiting_tissue})\n")
+    print(f"✅ Final Computed NDL: {ndl:.2f} minutes (Limited by Tissue {limiting_tissue})\n")
     # return {"ndl": round(ndl, 2), "deco_required": deco_required}
 
     return round(ndl, 2)
@@ -1171,11 +2231,28 @@ def calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction=0.21, nitrogen_f
 
 @app.route('/')
 def serve_frontend():
-    return send_from_directory('static', 'diveplanner.html')
+    return send_from_directory('static', 'divalgo.html')
 
 
-@app.route('/reset', methods=['POST'])
+@app.route('/api/v1/reset', methods=['POST'])
 def reset():
+    """
+    Reset the simulation state.
+    ---
+    tags:
+      - Simulation
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Simulation state reset successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Simulation reset successfully
+    """
     global state
     state = {
         "depth": 0,
@@ -1198,8 +2275,47 @@ def reset():
     return jsonify({"message": "Simulation reset successfully"})
 
 
-@app.route('/oxygen-toxicity-table', methods=['GET'])
+@app.route('/api/v1/oxygen-toxicity-table', methods=['GET'])
 def get_oxygen_toxicity_table():
+    """
+    Retrieve the oxygen toxicity table based on depth.
+    ---
+    tags:
+      - Oxygen Toxicity
+    produces:
+      - application/json
+    responses:
+      200:
+        description: A JSON array of objects containing oxygen toxicity data for various depths.
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Depth (m):
+                type: integer
+                description: The depth in meters.
+                example: 0
+              Absolute Pressure (ATA):
+                type: number
+                format: float
+                description: The calculated absolute pressure in atmospheres.
+                example: 1.0
+              PPO₂ in Air (bar):
+                type: number
+                format: float
+                description: Partial pressure of oxygen when breathing air.
+                example: 0.21
+              PPO₂ in 100% O₂ (bar):
+                type: number
+                format: float
+                description: Partial pressure of oxygen when breathing pure oxygen.
+                example: 1.0
+              Oxygen Toxicity Risk:
+                type: string
+                description: The assessed risk level based on oxygen toxicity.
+                example: Safe
+    """
     table = []
     for depth in range(0, 110, 10):
         absolute_pressure = round(1 + (depth / 10), 2)
@@ -1227,8 +2343,45 @@ def get_oxygen_toxicity_table():
     return jsonify(table)
 
 
-@app.route('/set-deco-model', methods=['POST'])
+@app.route('/api/v1/set-deco-model', methods=['POST'])
 def set_deco_model():
+    """
+    Set the decompression model.
+    ---
+    tags:
+      - Decompression
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        description: JSON payload to set the decompression model.
+        required: true
+        schema:
+          type: object
+          properties:
+            deco_model:
+              type: string
+              description: The decompression model to set. Valid values buhlmann, rgbm, vpm, deepstops, custom.
+              example: rgbm
+    responses:
+      200:
+        description: Decompression model set successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Decompression model set to rgbm
+      400:
+        description: Invalid decompression model.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Invalid decompression model
+    """
     data = request.json
     selected_model = data.get("deco_model")
     if selected_model not in ["bühlmann", "rgbm", "vpm", "deepstops", "custom"]:
@@ -1237,8 +2390,83 @@ def set_deco_model():
     return jsonify({"message": f"Decompression model set to {selected_model}"}), 200
 
 
-@app.route('/update_gas_mix', methods=['POST'])
+@app.route('/api/v1//update_gas_mix', methods=['POST'])
 def update_gas_mix():
+    """
+    Update gas mix values and recalculate oxygen toxicity.
+    ---
+    tags:
+      - Gas Mix
+    consumes:
+      - application/json
+    parameters:
+      - name: body
+        in: body
+        required: true
+        description: JSON payload containing new gas mix values. If a value is not provided, the current state value is used.
+        schema:
+          type: object
+          properties:
+            oxygen_fraction:
+              type: number
+              format: float
+              description: New oxygen fraction. Defaults to current state value if not provided.
+              example: 0.30
+            nitrogen_fraction:
+              type: number
+              format: float
+              description: New nitrogen fraction. Defaults to current state value if not provided.
+              example: 0.60
+            helium_fraction:
+              type: number
+              format: float
+              description: New helium fraction. Defaults to current state value if not provided.
+              example: 0.10
+    responses:
+      200:
+        description: Gas mix updated successfully.
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Gas mix updated
+            oxygen_fraction:
+              type: number
+              format: float
+              example: 0.30
+            nitrogen_fraction:
+              type: number
+              format: float
+              example: 0.60
+            helium_fraction:
+              type: number
+              format: float
+              example: 0.10
+            oxygen_toxicity:
+              type: number
+              format: float
+              example: 1.50
+      400:
+        description: No JSON data received or invalid input.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: No JSON data received
+      500:
+        description: Internal server error.
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Internal server error
+            message:
+              type: string
+              example: Detailed error message
+    """
     try:
         data = request.get_json()
         if not data:
@@ -1291,8 +2519,65 @@ def background_state_update():
 physiology_store = {}
 
 
-@app.route('/update_physiology', methods=['POST'])
+@app.route('/api/v1/update_physiology', methods=['POST'])
 def update_physiology():
+    """
+    Update physiology data for a given client.
+    ---
+    tags:
+      - Physiology
+    consumes:
+      - application/json
+    parameters:
+      - name: Client-UUID
+        in: header
+        type: string
+        required: true
+        description: Unique identifier for the client.
+      - name: body
+        in: body
+        required: true
+        description: JSON payload containing the physiology data.
+        schema:
+          type: object
+          # Define expected fields if known; otherwise, allow additional properties.
+          properties:
+            heart_rate:
+              type: integer
+              description: The client’s heart rate.
+              example: 70
+            blood_pressure:
+              type: string
+              description: The client’s blood pressure reading.
+              example: "120/80"
+          additionalProperties: true
+    responses:
+      200:
+        description: Physiology data updated successfully.
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            message:
+              type: string
+              example: Physiology data updated
+            data:
+              type: object
+              description: The updated physiology data.
+      400:
+        description: Missing Client-UUID header or invalid/missing JSON data.
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: error
+            message:
+              type: string
+              example: Missing Client-UUID header
+    """
     # Retrieve the Client-UUID from the headers
     client_uuid = request.headers.get('Client-UUID')
     if not client_uuid:
@@ -1319,11 +2604,6 @@ def update_physiology():
 
 
 if __name__ == '__main__':
-    # Kill any process on port 5000 before starting the server.
-
-    # Uncomment the following lines to run background updates if needed:
-    # threading.Thread(target=auto_update_rgbm, daemon=True).start()
-    # threading.Thread(target=auto_update_state, daemon=True).start()
     threading.Thread(target=background_state_update, daemon=True).start()
 
     app.run(debug=True)

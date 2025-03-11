@@ -29,4 +29,4 @@ COPY . .
 EXPOSE 5000
 
 # Start the application using Gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "flask_backend:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "main:app"]

@@ -2437,28 +2437,35 @@ def update_gas_mix():
     consumes:
       - application/json
     parameters:
-      - name: body
-        in: body
+      - in: body
+        name: body
+        description: Gas mix values.
         required: true
-        description: JSON payload containing new gas mix values. If a value is not provided, the current state value is used.
         schema:
           type: object
+          required:
+            - oxygen_fraction
+            - nitrogen_fraction
+            - helium_fraction
           properties:
             oxygen_fraction:
               type: number
-              format: float
-              description: New oxygen fraction. Defaults to current state value if not provided.
-              example: 0.30
+              description: Oxygen fraction.
+              example: 0.21
+              minimum: 0.0
+              maximum: 1.0
             nitrogen_fraction:
               type: number
-              format: float
-              description: New nitrogen fraction. Defaults to current state value if not provided.
-              example: 0.60
+              description: Nitrogen fraction.
+              example: 0.79
+              minimum: 0.0
+              maximum: 1.0
             helium_fraction:
               type: number
-              format: float
-              description: New helium fraction. Defaults to current state value if not provided.
-              example: 0.10
+              description: Helium fraction.
+              example: 0.0
+              minimum: 0.0
+              maximum: 1.0
     responses:
       200:
         description: Gas mix updated successfully.
@@ -2509,11 +2516,13 @@ def update_gas_mix():
         if not data:
             return jsonify({"error": "No JSON data received"}), 400
 
-        # Get new gas mix values
-        oxygen_fraction = float(data.get("oxygen_fraction", state.get("oxygen_fraction", 0.21)))
-        nitrogen_fraction = float(data.get("nitrogen_fraction", state.get("nitrogen_fraction", 0.79)))
-        helium_fraction = float(data.get("helium_fraction", state.get("helium_fraction", 0.0)))
-
+        # Validate that required keys exist and are valid numbers
+        try:
+            oxygen_fraction = float(data.get("oxygen_fraction", state.get("oxygen_fraction", 0.21)))
+            nitrogen_fraction = float(data.get("nitrogen_fraction", state.get("nitrogen_fraction", 0.79)))
+            helium_fraction = float(data.get("helium_fraction", state.get("helium_fraction", 0.0)))
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid or missing gas mix values"}), 400
         # Validate that gas fractions sum to 1.0 (or very close to 1.0 accounting for floating point errors)
         total = oxygen_fraction + nitrogen_fraction + helium_fraction
         if not (0.999 <= total <= 1.001):

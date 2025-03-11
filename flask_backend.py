@@ -78,6 +78,26 @@ swagger_template = {
     ]
 }
 
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec_1",
+            "route": "/apispec_1.json",
+            "rule_filter": lambda rule: True,  # include all endpoints
+            "model_filter": lambda tag: True,  # include all models
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/swagger/"
+}
+
+from flasgger import Swagger
+# swagger = Swagger(app, config=swagger_config, template=swagger_template)
+
+# swagger = Swagger(app, template=swagger_template, config=swagger_config)
+
 swagger = Swagger(app, template=swagger_template)
 
 # Define Bühlmann tissue compartments
@@ -436,9 +456,9 @@ def get_log_filename_endpoint():
               type: string
               example: "Missing Client-UUID header"
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID header"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     filename = get_log_filename(client_uuid)
     return jsonify({"log_filename": filename})
@@ -508,9 +528,9 @@ def ensure_log_file_endpoint():
               type: string
               example: "Detailed error message"
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID header"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     try:
         ensure_log_file(client_uuid)
@@ -599,9 +619,9 @@ def load_dive_logs_endpoint():
               type: string
               example: "Detailed error message"
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     try:
         logs = load_dive_logs(client_uuid)
@@ -716,9 +736,9 @@ def save_dive_log_endpoint():
               type: string
               example: "Detailed error message"
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID header"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     entry = request.get_json()
     if not entry:
@@ -1543,9 +1563,9 @@ def dive():
               type: string
               example: Missing Client-UUID
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     if 0 <= state["depth"] < 350:
         # Capture the complete state (and update time if needed)
@@ -1633,9 +1653,9 @@ def ascend():
               type: string
               example: Missing Client-UUID
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     if state["depth"] > 0:
         update_time_at_depth()
@@ -1712,9 +1732,9 @@ def get_logs():
               type: string
               example: Missing Client-UUID
     """
-    client_uuid = request.headers.get("Client-UUID")
-    if not client_uuid:
-        return jsonify({"error": "Missing Client-UUID"}), 400
+    client_uuid = request.headers.get('Client-UUID')
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     logs = load_dive_logs(client_uuid)
     print(f"Loaded logs: {logs}")
@@ -2011,7 +2031,7 @@ def compute_ndl():
 
 
 @app.route('/api/v1/calculate_ndl', methods=['POST'])
-@admin_required
+# @admin_required
 def calculate_ndl_endpoint():
     """
     Calculate the no-decompression limit (NDL) for a dive.
@@ -2021,6 +2041,11 @@ def calculate_ndl_endpoint():
     consumes:
       - application/json
     parameters:
+      - in: header
+        name: Client-UUID
+        type: string
+        required: true
+        description: Unique identifier for the client performing the dive.
       - in: header
         name: X-Admin-Token
         type: string
@@ -2037,22 +2062,31 @@ def calculate_ndl_endpoint():
               type: number
               description: Current dive depth in meters.
               example: 30
+              minimum: 0
+              maximum: 350
             time_at_depth_minutes:
               type: number
               description: Time spent at depth in minutes.
               example: 20
+              minimum: 0.1
             oxygen_fraction:
               type: number
               description: Fraction of oxygen in the breathing gas.
               example: 0.21
+              minimum: 0
+              maximum: 1
             nitrogen_fraction:
               type: number
               description: Fraction of nitrogen in the breathing gas.
               example: 0.79
+              minimum: 0
+              maximum: 1
             helium_fraction:
               type: number
               description: Fraction of helium in the breathing gas.
               example: 0.0
+              minimum: 0
+              maximum: 1
     responses:
       200:
         description: The calculated no-decompression limit (NDL) in minutes.
@@ -2061,7 +2095,7 @@ def calculate_ndl_endpoint():
           properties:
             ndl:
               type: number
-              description: The calculated no-decompression limit (NDL) in minutes.
+              description: The calculated no-decompression limit (NDL).
               example: 35.0
       400:
         description: Missing or invalid input.
@@ -2080,7 +2114,6 @@ def calculate_ndl_endpoint():
               type: string
               example: "Unauthorized"
     """
-
     data = request.get_json()
     if not data:
         return jsonify({"error": "Missing JSON data"}), 400
@@ -2093,6 +2126,10 @@ def calculate_ndl_endpoint():
         helium_fraction = float(data.get("helium_fraction", 0.0))
     except (TypeError, ValueError) as e:
         return jsonify({"error": "Invalid input", "message": str(e)}), 400
+
+    # Check for invalid values
+    if time_at_depth_minutes <= 0:
+        return jsonify({"error": "time_at_depth_minutes must be greater than 0"}), 400
 
     ndl_value = _calculate_ndl(depth, time_at_depth_minutes, oxygen_fraction, nitrogen_fraction, helium_fraction)
     return jsonify({"ndl": ndl_value})
@@ -2580,8 +2617,8 @@ def update_physiology():
     """
     # Retrieve the Client-UUID from the headers
     client_uuid = request.headers.get('Client-UUID')
-    if not client_uuid:
-        return jsonify({"status": "error", "message": "Missing Client-UUID header"}), 400
+    if not client_uuid or "\x00" in client_uuid:
+        return jsonify({"status": "error", "message": "Missing or invalid Client-UUID header"}), 400
 
     # Get the JSON data from the request
     data = request.get_json()

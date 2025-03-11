@@ -58,10 +58,10 @@ if app.config.get("ENV") == "development":
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "My Custom API",
-        "description": "This is the API documentation for My Custom API.",
+        "title": "Divalgo API",
+        "description": "This is the API documentation for Divalgo API.",
         "version": "1.0.0",
-        "termsOfService": "http://example.com/terms-of-service",
+        "termsOfService": "http://divalgo.cloud/terms-of-service",
         "contact": {
             "name": "API Support",
             "email": "support@example.com"

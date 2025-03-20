@@ -55,8 +55,6 @@ app.config["DEBUG"] = True  # Optional, but useful for debugging
 if app.config.get("ENV") == "development":
     app.register_blueprint(debug_bp, url_prefix="/debug")
 
-# swagger = Swagger(app)
-
 swagger_template = {
     "swagger": "2.0",
     "info": {
@@ -95,11 +93,8 @@ swagger_config = {
     "specs_route": "/swagger/"
 }
 
-# swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
-# swagger = Swagger(app, template=swagger_template, config=swagger_config)
-
-swagger = Swagger(app, template=swagger_template)
+swagger = Swagger(app, template=swagger_template, config=swagger_config)
 
 # Define Bühlmann tissue compartments
 buhlmann_tissues = [
@@ -122,6 +117,9 @@ last_update_time = time.time()
 # Global dive log (in-memory) for debugging
 dive_log = []
 
+@app.route('/swagger/')
+def swagger_ui():
+    return send_from_directory('flasgger_static', 'index.html')
 
 @app.route('/api/v1/update_tissue_state', methods=['GET'])
 def update_tissue_state_endpoint():

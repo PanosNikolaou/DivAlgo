@@ -384,14 +384,141 @@ window.onload = function () {
 };
 
 
+// Ensure the graph container exists
 function renderGraphPage() {
   return `
-    <div id="graph-page" class="tab-content" style="display: none;">
+    <div id="graph-page" class="tab-content">
       <h3>Dive Analysis Graphs</h3>
       <canvas id="diveGraph"></canvas>
     </div>
   `;
 }
+
+// Function to generate the decompression stop graph
+function generateDecoGraph(stops) {
+  const ctx = document.getElementById('diveGraph').getContext('2d');
+
+  // Extract depths, durations, and warnings
+  const depths = stops.map(stop => stop.depth);
+  const durations = stops.map(stop => stop.duration);
+  const warningColors = stops.map(stop => stop.warning ? 'rgba(255, 99, 132, 0.8)' : 'rgba(54, 162, 235, 0.8)');
+
+  // Destroy existing chart instance (if any)
+  if (window.decoChart) {
+    window.decoChart.destroy();
+  }
+
+  // Create the chart
+  window.decoChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: depths.map(d => `${d}m`), // X-axis labels (depth)
+      datasets: [{
+        label: 'Decompression Stop Duration (min)',
+        data: durations,
+        backgroundColor: warningColors, // Red if warning, blue otherwise
+        borderColor: warningColors.map(color => color.replace('0.8', '1')),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Duration (min)' }
+        },
+        x: {
+          title: { display: true, text: 'Depth (m)' }
+        }
+      }
+    }
+  });
+}
+
+/// Function to fetch decompression stops and update UI
+function updateDecoOutput() {
+    // Get current dive parameters from the UI (modify as needed)
+    const depth = parseFloat(document.getElementById("depth").innerText) || 0;
+    const pressure = parseFloat(document.getElementById("pressure").innerText) || 1.0;
+    const oxygenToxicity = parseFloat(document.getElementById("toxicity").innerText) || 0.21;
+    const ndl = parseFloat(document.getElementById("ndl").innerText) || -5.0;
+    const rgbmFactor = parseFloat(document.getElementById("rgbm").innerText) || 1.0;
+    const timeElapsed = parseInt(document.getElementById("time").innerText) || 0;
+    const timeAtDepth = parseInt(document.getElementById("depth-time").innerText) || 0;
+
+    // API Payload
+    const requestData = {
+        ndl,
+        depth,
+        pressure,
+        oxygen_toxicity: oxygenToxicity,
+        rgbm_factor: rgbmFactor,
+        time_elapsed: timeElapsed,
+        time_at_depth: timeAtDepth
+    };
+
+    console.log("📡 Fetching decompression stops with data:", requestData);
+
+    // Call Flask API to get decompression stops
+    fetch("/api/v1/decompression_stops", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("📊 Decompression Stops Received:", data);
+
+        const decoOutput = document.getElementById("deco-output");
+        decoOutput.innerHTML = "<h4>Decompression Stops:</h4>";
+
+        if (!data.stops || data.stops.length === 0) {
+            decoOutput.innerHTML += "<p>No decompression required.</p>";
+        } else {
+            let stopList = "<ul>";
+            data.stops.forEach(stop => {
+                stopList += `<li>📍 Stop at <strong>${stop.depth}m</strong> for <strong>${stop.duration} min</strong> (${stop.reason})</li>`;
+            });
+            stopList += "</ul>";
+            decoOutput.innerHTML += stopList;
+
+            // ✅ Generate the graph
+            generateDecoGraph(data.stops);
+
+            // ✅ Open the popup after generating the graph
+            openDecoGraphModal();
+        }
+    })
+    .catch(error => {
+        console.error("❌ Error fetching decompression stops:", error);
+    });
+}
+
+// Open the decompression graph modal
+function openDecoGraphModal() {
+    document.getElementById("decoGraphModal").style.display = "flex";
+}
+
+// Close the decompression graph modal
+function closeDecoGraphModal() {
+    document.getElementById("decoGraphModal").style.display = "none";
+}
+
+// Open the decompression graph modal
+function openDecoGraphModal() {
+    document.getElementById("decoGraphModal").style.display = "flex";
+}
+
+// Close the decompression graph modal
+function closeDecoGraphModal() {
+    document.getElementById("decoGraphModal").style.display = "none";
+}
+
+
+
 
 function updateNDLContainer(state) {
   const dynamicPages = document.getElementById("dynamic-pages");
@@ -587,6 +714,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fetch initial state and update dynamic pages
   fetchStateAndUpdate();
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("diveGraph")) {
+        generateDecoGraph([]);
+    }
+  });
+
 
   console.log("✅ All event listeners attached successfully!");
 });

@@ -1,3 +1,5 @@
+from typing import TextIO
+
 from flask import Flask, jsonify, request, send_from_directory
 import os
 import json
@@ -93,7 +95,6 @@ swagger_config = {
     "specs_route": "/swagger/"
 }
 
-from flasgger import Swagger
 # swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
 # swagger = Swagger(app, template=swagger_template, config=swagger_config)
@@ -231,7 +232,7 @@ def _padi_ndl_lookup():
               type: string
               example: Hello, world!
     """
-    global ndl_max
+    # global ndl_max
     """
     Calculate the residual no-decompression limit (NDL) based on the PADI Recreational Dive Planner.
 

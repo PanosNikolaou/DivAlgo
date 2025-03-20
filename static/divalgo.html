@@ -6,6 +6,8 @@
     <title>Diver Pressure Simulation</title>
     <link rel="icon" type="image/png" href="/static/images/da.ico"/>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -19,8 +21,21 @@
     <link rel="stylesheet" href="/static/css/styles.css"/>
 </head>
 <body>
-<!-- Login Modal -->
-<!-- Login Modal -->
+
+<!-- Decompression Graph Modal -->
+<div id="decoGraphModal" class="modal">
+    <div class="deco-modal-content">
+        <span class="close-btn" onclick="closeDecoGraphModal()">&times;</span>
+        <h2>Decompression Stop Graph</h2>
+        <canvas id="diveGraph"></canvas>
+            <!-- Dive Chart -->
+        <div class="chart-container">
+            <canvas id="diveChart"></canvas>
+        </div>
+    </div>
+</div>
+
+
 <div id="auth-login-modal" class="modal">
     <div class="auth-modal-content">
         <h2>Log In</h2>
@@ -185,11 +200,6 @@
                 </thead>
             </table>
         </div>
-    </div>
-
-    <!-- Dive Chart -->
-    <div class="chart-container">
-        <canvas id="diveChart"></canvas>
     </div>
 
     <!-- Gas Mixture Section -->
